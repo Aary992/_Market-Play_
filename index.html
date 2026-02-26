@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<title>MarketPlay</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#060608;--card:#0f0f13;
+  --b1:rgba(255,255,255,.07);--b2:rgba(255,255,255,.13);
+  --blue:#4F8EF7;--purple:#9D6EF8;--green:#0FD98A;--red:#F05252;--amber:#F5A623;
+  --t1:#F2F0EE;--t2:#999;--t3:#333;
+  --nav-h:64px;
+  --ffd:'Syne',sans-serif;--ffm:'Space Mono',monospace;--ffb:'DM Sans',sans-serif;
+}
+html,body,#root{height:100%;background:var(--bg);color:var(--t1);font-family:var(--ffb);-webkit-font-smoothing:antialiased;}
+button{font-family:var(--ffb);cursor:pointer;border:none;outline:none;}
+input{font-family:var(--ffb);outline:none;border:none;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:2px;}
+
+@keyframes orb-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes orb-pulse{0%{box-shadow:0 0 0 0 rgba(79,142,247,.9)}70%{box-shadow:0 0 0 18px rgba(79,142,247,0)}100%{box-shadow:0 0 0 0 rgba(79,142,247,0)}}
+@keyframes ripple{from{transform:scale(.7);opacity:.7}to{transform:scale(3.2);opacity:0}}
+@keyframes burst-p{0%{transform:translate(-50%,-50%) scale(1);opacity:.9}100%{transform:translate(calc(-50% + var(--bx)),calc(-50% + var(--by))) scale(0);opacity:0}}
+@keyframes chart-draw{from{stroke-dashoffset:1400}to{stroke-dashoffset:0}}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes xp-rise{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-28px)}}
+@keyframes dots{0%,80%,100%{transform:scale(.6);opacity:.3}40%{transform:scale(1);opacity:1}}
+@keyframes bub-in{from{opacity:0;transform:translateY(8px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes bub-out{from{opacity:1}to{opacity:0;transform:translateY(6px) scale(.95)}}
+@keyframes node-ping{0%{transform:scale(1);opacity:1}100%{transform:scale(2.4);opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(20px) scale(.95)}to{opacity:1;transform:none}}
+@keyframes sweep{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
+@keyframes slide-up{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+@keyframes xp-burst{0%{opacity:1;transform:translateY(0) scale(.8)}55%{opacity:1;transform:translateY(-38px) scale(1.25)}100%{opacity:0;transform:translateY(-60px) scale(.9)}}
+@keyframes fgreen{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
+@keyframes fred{0%{opacity:0}20%{opacity:1}100%{opacity:0}}
+@keyframes opt-in{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes q-in{from{opacity:0;transform:scale(.94) translateY(9px)}to{opacity:1;transform:none}}
+@keyframes streak-fire{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.1) rotate(2deg)}}
+@keyframes drop{from{opacity:0;transform:translateY(-28px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes confetti{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(60px) rotate(var(--r,180deg));opacity:0}}
+@keyframes toast-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes toast-out{from{opacity:1}to{opacity:0;transform:translateY(8px)}}
+@keyframes back-in{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:none}}
+@keyframes float-p{0%{transform:translateY(0) scale(1);opacity:.6}100%{transform:translateY(-55px) translateX(var(--px,0)) scale(0);opacity:0}}
+@keyframes scene{from{opacity:0;transform:translateY(-16px) scale(.97)}to{opacity:1;transform:none}}
+
+.tap{-webkit-tap-highlight-color:transparent;transition:transform .12s cubic-bezier(.34,1.56,.64,1),opacity .1s;user-select:none;}
+.tap:active{transform:scale(.92);opacity:.75;}
+.glow{position:relative;overflow:hidden;}
+.glow::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);transform:translateX(-100%) skewX(-15deg);}
+.glow:hover::after{transform:translateX(220%) skewX(-15deg);transition:transform .55s ease;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const {useState,useEffect,useRef,useCallback,useMemo,memo} = React;
+
+// ─── AI CALL (OpenRouter) ────────────────────────────────────────────────────
+async function callAI(messages, systemPrompt) {
+  const openRouterMessages = [];
+  if (systemPrompt) openRouterMessages.push({ role: "system", content: systemPrompt });
+  messages.forEach(m => openRouterMessages.push({ role: m.role, content: m.content }));
+
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer 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",
+      "HTTP-Referer": "https://market-play-a1ze.vercel.app/",
+      "X-Title": "MarketPlay"
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-3.5-turbo",
+      messages: openRouterMessages,
+      max_tokens: 512,
+      temperature: 0.7
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || "AI request failed");
+  }
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? "";
+}
+
+
+// ─── SFX ─────────────────────────────────────────────────────────────────────
+const SFX = (() => {
+  let ctx = null;
+  const ac = () => { if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); return ctx; };
+  const tone = (freq, type = 'sine', vol = 0.14, start = 0, dur = 0.12) => {
+    try {
+      const c = ac(), o = c.createOscillator(), g = c.createGain();
+      o.connect(g); g.connect(c.destination); o.type = type;
+      o.frequency.setValueAtTime(freq, c.currentTime + start);
+      g.gain.setValueAtTime(0, c.currentTime + start);
+      g.gain.linearRampToValueAtTime(vol, c.currentTime + start + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + start + dur);
+      o.start(c.currentTime + start); o.stop(c.currentTime + start + dur + 0.08);
+    } catch (e) {}
+  };
+  return {
+    tap: () => tone(880, 'sine', 0.05, 0, 0.05),
+    correct: () => { [523, 659, 784].forEach((f, i) => tone(f, 'sine', 0.12, i * 0.015, 0.22)); tone(1047, 'sine', 0.08, 0.12, 0.18); },
+    wrong: () => { tone(220, 'sawtooth', 0.1, 0, 0.06); tone(196, 'sawtooth', 0.08, 0.04, 0.1); },
+    step: () => tone(660, 'sine', 0.07, 0, 0.1),
+    tick: () => tone(1200, 'sine', 0.03, 0, 0.04),
+    tickU: () => { tone(1400, 'square', 0.04, 0, 0.04); tone(1400, 'square', 0.03, 0.06, 0.04); },
+    complete: () => [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 'sine', 0.11, i * 0.09, 0.24)),
+    alloc: () => tone(740, 'sine', 0.05, 0, 0.07),
+  };
+})();
+const vib = p => navigator?.vibrate?.(p);
+const H = { light: () => vib(5), medium: () => vib(16), success: () => vib([5, 36, 9]), error: () => vib([14, 24, 14]) };
+
+// ─── LEVELS ──────────────────────────────────────────────────────────────────
+const LEVELS = [
+  { name: "Observer", min: 0, color: "#666" },
+  { name: "Analyst", min: 150, color: "#3B82F6" },
+  { name: "Strategist", min: 400, color: "#8B5CF6" },
+  { name: "Architect", min: 800, color: "#10B981" },
+  { name: "Macro Mind", min: 1500, color: "#F59E0B" },
+];
+const getLevel = xp => { for (let i = LEVELS.length - 1; i >= 0; i--) if (xp >= LEVELS[i].min) return { ...LEVELS[i], idx: i }; return { ...LEVELS[0], idx: 0 }; };
+
+// ─── ASSET ICON ───────────────────────────────────────────────────────────────
+function AssetIcon({ id, size = 36 }) {
+  const cfg = {
+    gold:  { bg: "linear-gradient(135deg,#F5A623,#d4880e)", label: "Au",  c: "#fff" },
+    oil:   { bg: "linear-gradient(135deg,#555,#2a2a2a)",    label: "OIL", c: "#aaa" },
+    tech:  { bg: "linear-gradient(135deg,#4F8EF7,#2c5fcb)", label: "TC",  c: "#fff" },
+    bonds: { bg: "linear-gradient(135deg,#10B981,#0a8a5e)", label: "US",  c: "#fff" },
+    btc:   { bg: "linear-gradient(135deg,#F7931A,#c97610)", label: "₿",   c: "#fff" },
+    banks: { bg: "linear-gradient(135deg,#9D6EF8,#6c3ecb)", label: "BK",  c: "#fff" },
+  };
+  const d = cfg[id] || { bg: "linear-gradient(135deg,#444,#222)", label: "?", c: "#aaa" };
+  return (
+    <div style={{ width: size, height: size, borderRadius: size * 0.27, background: d.bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: size * 0.28, fontWeight: 700, color: d.c, fontFamily: "var(--ffm)", letterSpacing: "-.02em", boxShadow: "0 2px 8px rgba(0,0,0,.4)" }}>
+      {d.label}
+    </div>
+  );
+}
+
+// ─── AI INSIGHTS (rotating) ───────────────────────────────────────────────────
+const AI_INSIGHTS = [
+  "Most beginners confuse revenue with profit — they're very different things.",
+  "A bond is just a loan you give a company. You're the lender.",
+  "High P/E ratio = high expectations, not high profits.",
+  "Inflation benefits borrowers with fixed-rate debt. It hurts savers.",
+  "Diversification reduces risk without necessarily reducing returns.",
+  "Central banks control short-term rates. Markets control long-term ones.",
+  "A company can be profitable and still run out of cash.",
+  "Supply shocks raise prices AND slow growth — the hardest combo for policymakers.",
+  "Strong dollar → US company earnings from abroad shrink in annual reports.",
+  "Safe havens surge on fear. They fall fast when certainty returns.",
+];
+
+// ─── SKILL TRACKS ─────────────────────────────────────────────────────────────
+const TRACKS = [
+  { id: "money",  name: "Money Basics",  color: "#0FD98A", desc: "Budgeting, saving, credit cards, personal loans", icon: "💰" },
+  { id: "stocks", name: "Stock Market",  color: "#4F8EF7", desc: "Shares, dividends, indices, bull/bear markets",   icon: "📈" },
+  { id: "biz",    name: "Business",      color: "#F5A623", desc: "Revenue, profit, startups, cash flow, equity",    icon: "💼" },
+  { id: "econ",   name: "Economics",     color: "#9D6EF8", desc: "GDP, inflation, recession, supply & demand",      icon: "🏦" },
+];
+
+const cue = k => {
+  const pool = { correct: ["You saw that.", "Clean read.", "Exactly right."], wrong: ["Look again.", "Think about who benefits.", "Context changes everything."], start: ["Ready to sharpen your edge?", "Welcome back.", "Let's go."], trade: ["Allocate with intent.", "Every position is a thesis.", "The clock is live."] };
+  const a = pool[k] || pool.start;
+  return a[Math.floor(Math.random() * a.length)];
+};
+
+// ─── QUESTIONS ─────────────────────────────────────────────────────────────────
+// 32 challenge questions · 8 per track · strictly topic-relevant · no overlap
+// Finance Foundations uses completely separate questions (see LESSON section)
+
+const QS = [
+  // ══ MONEY BASICS (12) — personal finance only: budgeting, saving, credit, personal loans ══
+  {track:"money",q:"What is a budget?",
+   opts:["A plan deciding in advance how you will spend and save your money each month","A list of things you want to buy","A bank account for large purchases","A government tax on spending"],
+   ans:0,ex:"A budget is simply deciding where your money goes before the month starts — not restricting yourself, just being intentional. People who budget consistently are far more likely to save and less likely to go into debt."},
+
+  {track:"money",q:"What does it mean to 'pay yourself first'?",
+   opts:["Pay your bills before your rent","Move a set amount into savings immediately when you're paid, before spending anything","Increase your own salary","Pay off your credit card before buying food"],
+   ans:1,ex:"Most people spend first and save what's left — which is usually nothing. Paying yourself first flips this: savings move out automatically on payday, and you live on what remains. It's the most reliable saving habit there is."},
+
+  {track:"money",q:"What is an emergency fund?",
+   opts:["A government benefit paid when you lose your job","Money invested in bonds for retirement","3–6 months of essential living expenses kept in an easy-access savings account","An insurance policy that covers unexpected bills"],
+   ans:2,ex:"Car breaks down, boiler fails, you lose your job — an emergency fund means you cover it without reaching for a credit card. Without one, any unexpected cost creates debt. 3 months of expenses is the minimum most advisers recommend."},
+
+  {track:"money",q:"What does APR stand for on a credit card or loan?",
+   opts:["Average Purchase Rate — the mean price of items bought","Annual Profit Rate — how much savings earn","Approved Personal Rate — your individual credit limit","Annual Percentage Rate — the true yearly cost of borrowing, including all fees"],
+   ans:3,ex:"APR lets you compare the real cost of borrowing across different products. A card at '0% for 6 months' might have a 29.9% APR after that. Always check the APR — not just the headline rate — before borrowing."},
+
+  {track:"money",q:"What is the difference between a debit card and a credit card?",
+   opts:["A debit card spends money already in your bank account; a credit card borrows money you repay later","Debit cards are only for online use; credit cards work everywhere","They are the same product — just different designs","Credit cards are free to use; debit cards charge fees"],
+   ans:0,ex:"Tap your debit card — your balance drops immediately. Tap a credit card — the bank pays the shop and sends you a bill later. A credit card is a short-term loan. Repay it in full every month and it costs you nothing. Carry a balance and interest kicks in."},
+
+  {track:"money",q:"What does a credit score measure?",
+   opts:["Your annual income","Your history of repaying debts reliably — used by lenders to assess risk","How much money you have in your bank account","Your total assets compared to national averages"],
+   ans:1,ex:"A credit score is your financial reputation. Lenders check it before approving mortgages, loans, and credit cards. Pay on time, every time, and your score improves. Miss payments and it drops — staying on your record for up to 6 years."},
+
+  {track:"money",q:"What does the 50/30/20 budgeting rule suggest?",
+   opts:["50% to savings, 30% to rent, 20% to food","50% to investments, 30% to needs, 20% to leisure","50% to needs like rent and bills, 30% to wants, 20% to savings or debt repayment","50% to debt, 30% to savings, 20% to spending"],
+   ans:2,ex:"On a £2,000 take-home: £1,000 on needs, £600 on wants, £400 to savings or debt. The 20% is the critical part — most people skip it because they save what's left over (usually nothing). Decide the savings amount first, then live on the rest."},
+
+  {track:"money",q:"What happens if you only make the minimum payment on a credit card each month?",
+   opts:["Nothing changes — minimums maintain your balance","You pay far more in total interest and the debt takes many years to clear","The bank automatically reduces your interest rate","The balance clears within 2 years — minimums are designed for this"],
+   ans:3,ex:"Credit card minimums are designed to keep you paying as long as possible. £2,000 at 25% APR with a £40 minimum payment takes roughly 12 years to clear and costs about £3,800 total — nearly double the original balance. Always pay more."},
+
+  {track:"money",q:"What is net worth?",
+   opts:["Everything you own (assets) minus everything you owe (liabilities)","Your annual salary before tax","Your monthly take-home pay","The balance in all your bank accounts combined"],
+   ans:0,ex:"Assets: car worth £6,000 + savings £4,000 = £10,000. Liabilities: personal loan £3,000. Net worth = £7,000. A simple, honest snapshot of your financial position. Growing this number — even slowly — means you're heading in the right direction."},
+
+  {track:"money",q:"What is a standing order?",
+   opts:["A legal document freezing your bank account","A fixed automatic payment you set up to leave your account on a set date each month","A court order to repay a debt","An instruction to your bank to decline purchases over a certain amount"],
+   ans:1,ex:"A standing order sends a fixed amount from your account automatically — perfect for regular savings transfers or rent payments. Unlike a direct debit (which varies), a standing order is always the same amount. It's the easiest way to automate saving."},
+
+  {track:"money",q:"What does 'living within your means' mean?",
+   opts:["Living in affordable accommodation","Only buying things when they are discounted","Spending less than you earn each month","Avoiding all borrowing for your entire life"],
+   ans:2,ex:"Earn £1,800, spend £2,000 — you're going backwards by £200 every month. Earn £1,800, spend £1,500 — you're building a £300/month cushion. Living within your means creates the gap between income and spending where wealth is built."},
+
+  {track:"money",q:"Why is it important to have savings separate from your everyday current account?",
+   opts:["Banks legally require you to have two accounts","Savings accounts always earn higher interest than current accounts","It improves your credit score to have multiple accounts","It keeps savings out of sight and out of mind, reducing the temptation to spend them"],
+   ans:3,ex:"Money sitting in your current account gets spent. Separating savings — ideally with automatic transfers on payday — creates a psychological and practical barrier. You're far less likely to dip into a savings account for impulse purchases than your current account."},
+
+  // ══ STOCK MARKET (12) — shares, dividends, markets, indices only ══
+  {track:"stocks",q:"What is a share of stock?",
+   opts:["A small unit of ownership in a company — shareholders own a piece of the business","A loan you give to a company in exchange for interest","A fixed monthly payment a company makes to investors","A government certificate guaranteeing an investment"],
+   ans:0,ex:"Buy 1 Apple share and you own a tiny fraction of Apple's entire business. If Apple grows more valuable, your share is worth more. If it shrinks, so does your share. Shareholders vote at annual general meetings and may receive a portion of profits."},
+
+  {track:"stocks",q:"What is a dividend?",
+   opts:["A penalty fee for selling shares too early","A portion of a company's profits paid out to its shareholders","The commission a broker charges when you buy shares","The price difference between buying and selling a share"],
+   ans:1,ex:"Coca-Cola pays shareholders a dividend every quarter. Own 100 shares, company pays 50p per share — you receive £50 just for holding the stock. Not all companies pay dividends; many reinvest profits back into growth instead."},
+
+  {track:"stocks",q:"What does 'bull market' mean?",
+   opts:["A stock exchange open only to professional investors","A period when share prices are falling sharply and investors are fearful","A period when share prices are rising steadily and investor confidence is high","A market that only trades agricultural commodities"],
+   ans:2,ex:"A bull charges forward — bull market = prices rising. The opposite is a bear market (bear swipes downward = prices falling). The S&P 500 was broadly in a bull market from 2009 to 2020. Knowing which phase you're in shapes how investors behave."},
+
+  {track:"stocks",q:"What is a stock market index like the FTSE 100?",
+   opts:["A list of every company that has ever been listed on a stock exchange","A government register of all shareholders in the UK","A fixed savings rate published by the stock exchange","A basket tracking the share prices of a selected group of companies — the FTSE 100 tracks the 100 largest UK-listed companies"],
+   ans:3,ex:"The FTSE 100 tracks 100 biggest UK companies. The S&P 500 tracks 500 large US ones. When people say 'the market is up 1%', they usually mean an index is up 1%. It's a single number representing the average performance of many companies."},
+
+  {track:"stocks",q:"What is an index fund?",
+   opts:["A fund that passively tracks a market index — owning a slice of every company in it","A fund run by analysts who pick the best-performing stocks","A savings account that tracks the Bank of England base rate","A fund that only invests in government bonds"],
+   ans:0,ex:"A FTSE 100 index fund automatically owns a slice of all 100 companies. When one company grows, you benefit. When one struggles, the others cushion the fall. Low fees, instant diversification, no stock-picking required."},
+
+  {track:"stocks",q:"What does 'diversification' mean in investing?",
+   opts:["Putting all your money into the single strongest stock","Spreading investments across many different companies and asset types to reduce risk","Investing in only one sector you know well","Switching between stocks and cash depending on the news"],
+   ans:1,ex:"If you own one company's shares and it collapses, you lose everything. Own 50 companies and one collapse is a bad day, not a disaster. Diversification doesn't eliminate risk — it prevents any single failure from destroying your entire portfolio."},
+
+  {track:"stocks",q:"What is a bear market?",
+   opts:["A private stock exchange used only by institutional investors","A market where only defensive stocks are traded","A prolonged period where share prices fall 20% or more from recent highs","A stock market that opens before normal trading hours"],
+   ans:2,ex:"Bear markets are defined as a 20%+ decline from a recent peak, lasting months or longer. They happen regularly — roughly every 3–5 years historically. The 2008 financial crisis, the 2020 COVID crash, and the 2022 tech selloff were all bear markets."},
+
+  {track:"stocks",q:"What is market capitalisation (market cap)?",
+   opts:["The total annual revenue a company earns","The maximum number of shares a company is allowed to issue","The total dividends paid by a company in a year","Share price multiplied by total shares outstanding — the total value to buy every share today"],
+   ans:3,ex:"Apple at $193/share with 15.4 billion shares = ~$3 trillion market cap. It's how we compare company sizes. 'Large cap' (£10B+), 'mid cap', 'small cap' — these labels tell you roughly what size of company you're investing in."},
+
+  {track:"stocks",q:"What does a rising share price generally indicate?",
+   opts:["Investors collectively believe the company will be worth more in future","The company has recently hired more staff","The company's products have just become cheaper to make","The government has reduced taxes on that company"],
+   ans:0,ex:"Share prices are set by millions of buyers and sellers expressing their views on a company's future. More buyers than sellers = price rises. A rising price typically means growing confidence in the company's future profits or competitive position."},
+
+  {track:"stocks",q:"What is the P/E (price-to-earnings) ratio?",
+   opts:["The percentage of profit paid out as dividends","How much investors are paying for each £1 of a company's annual earnings","How many products the company sells per share issued","The company's profit expressed as a percentage of revenue"],
+   ans:1,ex:"P/E of 15 means investors pay £15 for every £1 of annual earnings. A high P/E (30+) suggests investors expect fast growth. A low P/E might mean good value — or a struggling business. It's one of the most commonly used tools for comparing stocks."},
+
+  {track:"stocks",q:"What is the main risk of investing money in the stock market?",
+   opts:["You permanently lose access to your money once invested","Companies can legally cancel your shares at any time","Share prices can fall and you may get back less than you invested","You must pay a 30% tax on all stock market gains"],
+   ans:2,ex:"In early 2020, global markets fell ~35% in weeks due to COVID. Anyone who needed their money then had to sell at a loss. The key: only invest money you won't need for 5+ years, stay diversified, and don't panic-sell during downturns."},
+
+  {track:"stocks",q:"What does it mean when analysts say a stock is 'overvalued'?",
+   opts:["The company has too many shares outstanding","The company is paying out too much in dividends","The stock has recently split into smaller shares","The share price is higher than what the company's fundamentals — earnings, assets, growth — seem to justify"],
+   ans:3,ex:"If a company earns £1M/year but its market cap is £500M (P/E of 500), most analysts would call it overvalued — you're paying a huge premium for expected future growth. If that growth doesn't materialise, the price drops sharply to reflect reality."},
+
+  // ══ BUSINESS (12) — how businesses work: revenue, profit, models, structure ══
+  {track:"biz",q:"What is the difference between revenue and profit?",
+   opts:["Revenue is total money coming into the business before any costs; profit is what remains after all costs are paid","They are the same — both mean money the business earns","Revenue is what's left after tax; profit is before tax","Profit is total sales; revenue includes loans and investments too"],
+   ans:0,ex:"A food stall takes £800 in a day (revenue). Costs: £300 ingredients, £100 fuel, £50 packaging = £450. Profit = £350. You can have huge revenue and make a loss. Many large companies have revenue in the billions but still lose money."},
+
+  {track:"biz",q:"What does it mean when a business 'breaks even'?",
+   opts:["The business makes exactly double what it spent","The business's revenue exactly equals its total costs — no profit and no loss","The business splits its profits equally between all employees","The business has reached a point where it can repay all its debts"],
+   ans:1,ex:"Rent a stall for £100, buy stock for £200. You need to sell £300 worth to break even. Every sale after that is pure profit. Knowing your break-even point is fundamental — it's the minimum you must achieve before any money is made."},
+
+  {track:"biz",q:"What is a business model?",
+   opts:["A physical scale model of the company's headquarters","The CEO's management philosophy","How a business earns money — what it sells, to whom, and at what price","A 5-year financial projection submitted to the government"],
+   ans:2,ex:"Spotify's model: free tier (earns ad revenue) + £10/month subscription. Netflix: £17/month, no ads. Airbnb: takes a % of every booking. The business model determines whether a company can ever be profitable — it's the most important question to ask about any business."},
+
+  {track:"biz",q:"What is cash flow in a business?",
+   opts:["The total profit a company makes in a financial year","The company's bank balance at the start of each quarter","The value of all physical assets owned by the business","The actual movement of money into and out of a business day to day"],
+   ans:3,ex:"A design agency invoices £5,000 in January. The client pays in April. Meanwhile the agency pays salaries, rent, and software every month. It's profitable on paper but cash-poor in practice. Cash flow crises kill profitable businesses constantly."},
+
+  {track:"biz",q:"What is equity in a business?",
+   opts:["The ownership value — what the business is worth minus what it owes","The total annual revenue of the business","The money a business borrowed from a bank","The wages paid to all employees in a year"],
+   ans:0,ex:"Business worth £200,000, owes £80,000 in loans = £120,000 equity. When investors buy equity, they buy a share of that ownership. When founders take investment, they sell a percentage of their equity — trading ownership for cash to grow."},
+
+  {track:"biz",q:"What is gross profit margin?",
+   opts:["Total revenue divided by number of employees","Revenue minus the direct cost of making products, divided by revenue — expressed as a percentage","Net profit expressed as a percentage of the company's assets","The difference between a company's highest and lowest revenue months"],
+   ans:1,ex:"Sell a product for £100, costs £40 to make = £60 gross profit. Gross margin = 60%. High gross margin means pricing power and room to invest in overheads, marketing, and growth. A 10% gross margin leaves almost no buffer for anything going wrong."},
+
+  {track:"biz",q:"Why do many successful startups lose money in their early years?",
+   opts:["They are legally required to reinvest all earnings for 3 years","Their products are always underpriced at launch","They invest heavily in growth — product, people, marketing — before revenues catch up to those costs","They pay their founders too much in the early stage"],
+   ans:2,ex:"Amazon lost money for years building logistics, AWS, and Prime. Uber lost billions gaining market share. These were deliberate bets: spend aggressively now to dominate the market, profit later. Many of the most successful companies looked like failures on paper early on."},
+
+  {track:"biz",q:"What is the difference between a sole trader and a limited company?",
+   opts:["A sole trader can hire staff; a limited company cannot","There is no legal difference — both protect personal assets equally","A limited company can only ever have a single owner","A sole trader is personally liable for all business debts; a limited company is a separate legal entity that limits personal liability"],
+   ans:3,ex:"Dave's Plumbing (sole trader): business owes £50K, creditors pursue Dave personally. Dave's Plumbing Ltd: only the company is liable — Dave's savings and home are protected. The 'limited' in limited company means limited liability for its owners."},
+
+  {track:"biz",q:"What does 'scaling a business' mean?",
+   opts:["Growing revenue significantly without costs rising at the same rate","Reducing the business to a more manageable size","Moving the business to a larger physical location","Selling the business to a larger competitor"],
+   ans:0,ex:"A software company writes code once and sells it to 100,000 users — costs barely change but revenue multiplies. That's scaling. A barber cutting more hair must hire more barbers — costs rise with revenue. Scalable businesses are far more valuable because growth doesn't require proportional spending."},
+
+  {track:"biz",q:"What is B2B vs B2C?",
+   opts:["B2B = Bank to Bank transactions; B2C = Bank to Consumer","B2B = Business selling to other businesses; B2C = Business selling directly to consumers","B2B = Buy to Build; B2C = Buy to Consume","B2B is for digital products; B2C is for physical goods only"],
+   ans:1,ex:"Salesforce sells CRM software to companies for £50,000+/year: B2B — few clients, large contracts, long sales cycles. Nike sells trainers to millions of people for £120 each: B2C — brand-driven, impulse purchases, mass marketing. The sales, pricing, and marketing strategies are completely different."},
+
+  {track:"biz",q:"What is a startup's 'runway'?",
+   opts:["The planned expansion into new geographic markets","The number of months until a startup is legally required to file accounts","How long the business can continue operating at its current spending rate before running out of cash","The minimum revenue needed to attract a Series A investment"],
+   ans:2,ex:"Startup has £600,000 in the bank and spends £100,000/month = 6 months runway. After that: raise more funding, reach profitability, or close. Founders typically start fundraising 4–5 months before they run out — meaning a 6-month runway requires acting immediately."},
+
+  {track:"biz",q:"What is a USP (Unique Selling Proposition)?",
+   opts:["The legal structure a company registers as","A government grant given to new businesses","A business's most profitable product line","The one thing that makes a business meaningfully different from its competitors"],
+   ans:3,ex:"Apple's USP: premium design and a seamless ecosystem. Ryanair's USP: cheapest fares, no frills. Without a USP, a business competes only on price — a race to the bottom. The strongest businesses answer 'why would someone choose us over anyone else?' with one clear, honest answer."},
+
+  // ══ ECONOMICS (12) — macroeconomics: GDP, inflation, recession, policy, markets ══
+  {track:"econ",q:"What does GDP measure?",
+   opts:["The total value of all goods and services produced in a country during a year","The government's total debt to other countries","The average salary paid across all workers in a country","The total taxes collected by the government in a year"],
+   ans:0,ex:"Every coffee sold, car built, and haircut given adds to UK GDP (~£2.5 trillion/year). GDP rising = economy expanding. GDP falling = economy shrinking. Two consecutive quarters of falling GDP = a recession. It's the single most watched measure of economic health."},
+
+  {track:"econ",q:"What is inflation?",
+   opts:["A reduction in the number of banknotes in circulation","A general rise in prices across the economy, meaning money buys less over time","A sharp rise in the stock market","A fall in the value of imports from overseas"],
+   ans:1,ex:"At 5% inflation, a £100 weekly shop costs £105 next year. The Bank of England targets 2% annual inflation as the healthy level. Too high: purchasing power erodes fast. Too low or negative (deflation): people delay spending, businesses struggle, the economy stalls."},
+
+  {track:"econ",q:"What is a recession?",
+   opts:["When a country's currency loses value against other currencies","When government spending exceeds tax revenue for two consecutive years","Two consecutive quarters (6 months) where a country's GDP shrinks","When inflation exceeds 5% for more than one quarter"],
+   ans:2,ex:"GDP shrinks January–March AND April–June = recession by definition. Companies cut costs, freeze hiring, reduce investment. Unemployment rises. Consumer confidence falls. Less spending causes more cutbacks. Recessions become self-reinforcing — which is why central banks act quickly."},
+
+  {track:"econ",q:"What is the basic principle of supply and demand?",
+   opts:["Prices are set by the government to balance supply and demand","Demand always rises when prices fall, regardless of the product","Supply and demand only applies to physical goods, not services","When supply is limited or demand is high, prices tend to rise — and vice versa"],
+   ans:3,ex:"Limited PS5s at launch + millions of buyers = resale prices shoot up. Loads of used cars for sale + few buyers = prices fall. Supply and demand is the engine behind almost every price in a market economy — from petrol to avocados to houses."},
+
+  {track:"econ",q:"What is the Bank of England's primary role?",
+   opts:["To set interest rates and manage the money supply to keep inflation near 2% and the economy stable","To provide mortgages and loans directly to UK households","To manage the UK government's day-to-day spending","To regulate all UK commercial banks and set their lending rules"],
+   ans:0,ex:"The Bank of England doesn't have a high-street branch. Its Monetary Policy Committee sets the base interest rate — the rate that ripples through every mortgage, savings account, and business loan in the UK. Its main goal: keep inflation near 2%."},
+
+  {track:"econ",q:"What happens to a country's exports when its currency weakens?",
+   opts:["Exports become more expensive for foreign buyers","Exports become cheaper for foreign buyers, making them more competitive internationally","Exports stop being competitive because import costs rise","The government restricts exports until the currency recovers"],
+   ans:1,ex:"UK car costs £30,000. At £1=€1.20, Europeans pay €36,000. Pound weakens to £1=€1.00: same car now costs €30,000 — a 17% discount. Weaker pound makes UK exports cheaper abroad and boosts demand. It also makes imports more expensive, contributing to inflation."},
+
+  {track:"econ",q:"What does it mean when a government uses 'fiscal stimulus'?",
+   opts:["The central bank prints more money to reduce interest rates","The government raises taxes to reduce the national debt","The government cuts taxes or increases public spending to boost economic activity","The government imposes trade tariffs to protect domestic industries"],
+   ans:2,ex:"Economy shrinking? Government cuts income tax (people keep more, spend more) or builds roads and hospitals (directly pays workers). Both pump money into the economy. The 2008 financial crisis and COVID both triggered massive fiscal stimulus packages globally."},
+
+  {track:"econ",q:"Why does the Bank of England raise interest rates when inflation is high?",
+   opts:["To encourage more government borrowing at cheaper rates","To directly reduce the prices of goods in shops","To attract foreign investment into UK government bonds","To make borrowing more expensive, reducing spending and cooling demand so price rises slow down"],
+   ans:3,ex:"Higher rates → more expensive mortgages and loans → households spend less → businesses sell less → less pressure to raise prices → inflation cools. This transmission takes 12–18 months. The Bank of England raised rates 14 times consecutively in 2022–23 to tame post-COVID inflation."},
+
+  {track:"econ",q:"What is the difference between fiscal policy and monetary policy?",
+   opts:["Fiscal policy = government decisions on tax and spending; monetary policy = central bank decisions on interest rates and money supply","They are different names for the same thing — both are controlled by the Bank of England","Fiscal policy is emergency policy; monetary policy is routine","Fiscal policy controls inflation; monetary policy controls unemployment"],
+   ans:0,ex:"Chancellor cuts income tax = fiscal policy (HM Treasury). Bank of England raises interest rates = monetary policy (Monetary Policy Committee). Two separate institutions, different tools, acting on the same economy simultaneously — often in different directions."},
+
+  {track:"econ",q:"What is unemployment rate?",
+   opts:["The percentage of workers who earn below the minimum wage","The percentage of the working-age population who want a job but cannot find one","The number of jobs created in a country each month","The proportion of companies that went bankrupt in the previous year"],
+   ans:1,ex:"If 5% of people actively seeking work can't find it, unemployment = 5%. High unemployment means less consumer spending (people have less money), lower tax revenue, and higher government benefit costs. It's a key indicator of economic health alongside GDP and inflation."},
+
+  {track:"econ",q:"What causes a demand-pull inflation?",
+   opts:["A sudden rise in the cost of imported raw materials","Central banks printing too little money","Too much money chasing too few goods — strong demand pushes prices up","Too many goods being produced relative to what consumers want"],
+   ans:2,ex:"Post-COVID, governments sent out stimulus cheques and people had saved money during lockdowns. Suddenly huge demand hit an economy with supply chain disruptions and limited goods — classic demand-pull inflation. Prices surged because consumers wanted more than businesses could supply."},
+
+  {track:"econ",q:"What is the balance of trade?",
+   opts:["The government's budget deficit or surplus each year","A country's total GDP divided by its population","The exchange rate between two countries' currencies","The difference between the value of a country's exports and the value of its imports"],
+   ans:3,ex:"UK exports £700B, imports £800B = trade deficit of £100B. The UK consistently runs a trade deficit — it imports more than it exports. A trade surplus (exports > imports) means more money flows into the country than out. The balance of trade affects currency values and economic growth."},
+];
+
+// ── Per-track rotating decks — strict no-repeat until all 8 exhausted ─────────
+const _tkDecks = { money: [], stocks: [], biz: [], econ: [] };
+const _shuf = arr => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+const _refill = track => { _tkDecks[track] = _shuf(QS.filter(q => q.track === track)); };
+const _pick = (track, n) => {
+  if (_tkDecks[track].length < n) _refill(track);
+  return _tkDecks[track].splice(0, n);
+};
+// Challenge: 2 from each track = 8 questions per session, shuffled
+// Shuffle options for each question so correct answer is never fixed at index 1
+const _shuffleOpts = (q) => {
+  const correctText = q.opts[q.ans];
+  const shuffled = _shuf([...q.opts]);
+  return { ...q, opts: shuffled, ans: shuffled.indexOf(correctText) };
+};
+const pickChallengeQ = () => _shuf([..._pick("money",2),..._pick("stocks",2),..._pick("biz",2),..._pick("econ",2)]).map(_shuffleOpts);
+const pickQ = () => pickChallengeQ();
+
+// ─── TRADING ──────────────────────────────────────────────────────────────────
+const TEMPLATES = [
+  { key: "conflict",  headline: "War breaks out near a major oil-producing region", sub: "Oil supplies are disrupted — prices expected to spike", color: "#EF4444", bias: { gold: 1, oil: 1, tech: -1, bonds: 1, btc: -1, banks: -1 } },
+  { key: "rate_cut",  headline: "Central bank cuts interest rates to boost the economy", sub: "Cheaper borrowing makes growth investments more attractive", color: "#4F8EF7", bias: { gold: 1, bonds: 1, tech: 1, banks: -1, btc: 1, oil: -1 } },
+  { key: "inflation", headline: "Prices rising fast — inflation hits a 40-year high", sub: "The cost of everyday goods is climbing sharply", color: "#F59E0B", bias: { gold: 1, oil: 1, tech: -1, bonds: -1, btc: -1, banks: 1 } },
+  { key: "recession", headline: "The economy is shrinking — recession officially confirmed", sub: "Businesses are cutting spending and people are worried", color: "#8B5CF6", bias: { gold: 1, bonds: 1, tech: -1, banks: -1, btc: -1, oil: -1 } },
+  { key: "tech_boom", headline: "A major tech company announces a revolutionary new product", sub: "Investors rush into technology stocks expecting big profits", color: "#0FD98A", bias: { gold: -1, oil: -1, tech: 1, bonds: -1, btc: 1, banks: 1 } },
+  { key: "pandemic",  headline: "A new virus spreads — governments close borders", sub: "Fear spikes as travel and trade grind to a halt", color: "#F59E0B", bias: { gold: 1, bonds: 1, tech: 1, banks: -1, btc: -1, oil: -1 } },
+];
+const APOOL = [
+  { id: "gold",  n: "Gold",        hint: "People buy gold when they're scared — it holds value in a crisis" },
+  { id: "oil",   n: "Oil",         hint: "Price goes up when supply is low or demand is high" },
+  { id: "tech",  n: "Tech Stocks", hint: "Grows fast in good times, falls hard when people get nervous" },
+  { id: "bonds", n: "US Bonds",    hint: "Safe government debt — investors hide here when markets panic" },
+  { id: "btc",   n: "Bitcoin",     hint: "Very unpredictable — can rise or fall sharply on sentiment" },
+  { id: "banks", n: "Banks",       hint: "Do well when interest rates rise; struggle in recessions" },
+];
+const genSession = () => {
+  const tmpl = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)];
+  const relevant = APOOL.filter(a => tmpl.bias[a.id] !== undefined);
+  const extras = APOOL.filter(a => tmpl.bias[a.id] === undefined);
+  const assets = [...relevant, ...extras].slice(0, 5).map(a => ({ ...a, expected: tmpl.bias[a.id] ?? (Math.random() > .5 ? 1 : -1), vol: .4 + Math.random() * .7 }));
+  return { ...tmpl, assets };
+};
+const pricePath = (n = 14, dir = 0, vol = .5, seed = Math.random()) => {
+  let price = 50, mom = 0;
+  return Array.from({ length: n }, (_, i) => {
+    const noise = (Math.sin(seed * 137.5 * (i + 1)) + Math.cos(seed * 91.3 * (i + 1))) * vol * 3.2;
+    const trend = dir * (1.6 + vol * 1.8) * ((i + 1) / n);
+    mom = mom * .55 + (noise + trend) * .45;
+    price = Math.max(8, Math.min(92, price + mom));
+    return +price.toFixed(2);
+  });
+};
+
+// ─── LESSON ─────────────────────────────────────────────────────────────────
+// Finance Foundations — 10 levels, each self-contained topic
+// ALL questions unique — zero overlap with Challenge Mode QS
+
+const FF_LEVELS = [
+  {id:"budgeting",num:1,icon:"📋",title:"Budgeting",desc:"Take control of your money",color:"#0FD98A",xp:40,steps:[
+    {type:"reveal",headline:"Why most people run out of money.",insight:"It's rarely about how much you earn. People earning £60,000/year can be as broke as people earning £20,000 — because they never decided where their money was going. A budget is simply a plan for your money before you spend it."},
+    {type:"choice",headline:"Payday. Month ends. Nothing left.",body:"You earn £2,000/month, pay rent, buy food, cover bills. At month-end your balance is nearly zero — but you have no idea where it went.",q:"What is the most important first step?",
+     opts:["Stop using your card for a month","Write down every income and expense to see the full picture","Cut all non-essentials immediately","Ask your employer for a pay rise"],ans:1,
+     ex:"You can't fix what you can't see. Before cutting anything, track where money goes. Most people are shocked — small daily purchases add up to hundreds per month."},
+    {type:"allocate",headline:"Split your £2,000 take-home pay.",body:"You earn £2,000/month after tax. Assign a percentage to each category. Most financial experts follow a clear priority order.",
+     assets:[{id:"needs",n:"Needs (rent, bills, food)",hint:"Non-negotiable essentials — aim for under 50%"},{id:"wants",n:"Wants (eating out, hobbies)",hint:"Nice-to-have — keep this under 30%"},{id:"save",n:"Savings",hint:"Pay yourself first — at least 20%"},{id:"debt",n:"Debt repayment",hint:"Any outstanding loans or credit cards"}]},
+    {type:"reveal",headline:"The 50/30/20 rule.",insight:"50% needs · 30% wants · 20% savings or debt repayment. It's a guide, not a law. The key: decide the savings amount first and live on what's left. Most people save whatever happens to remain — usually nothing."},
+    {type:"insight",headline:"Budgeting basics.",rules:[
+      {color:"#0FD98A",rule:"Track before you cut.",sub:"Spend one month writing down everything. The pattern reveals exactly where money leaks."},
+      {color:"#4F8EF7",rule:"Pay yourself first.",sub:"Move savings out the moment you're paid. Don't wait to see what's left — there's never anything left."},
+      {color:"#F5A623",rule:"Budget ≠ restriction.",sub:"A budget is permission to spend on things you've decided matter — without guilt or mystery."}
+    ]}
+  ]},
+
+  {id:"saving",num:2,icon:"🏦",title:"Saving",desc:"Build a safety net and grow your money",color:"#4F8EF7",xp:40,steps:[
+    {type:"reveal",headline:"Saving and investing are not the same thing.",insight:"Saving = cash in a bank account for short-term safety and goals. Investing = putting money into assets (stocks, property) that grow over time but can fall in value. You need both: savings for emergencies, investments for long-term wealth."},
+    {type:"choice",headline:"Emergency fund: how much is enough?",body:"You've started saving and have £1,000 in a savings account. Your monthly essential expenses are £1,400.",q:"Is £1,000 an adequate emergency fund?",
+     opts:["Yes — it covers most emergencies","Yes — put the rest straight into investments","No — it barely covers three weeks; aim for 3–6 months of expenses","Only if you have a very secure job"],ans:2,
+     ex:"An emergency fund needs to cover 3–6 months of essential expenses — here that's £4,200–£8,400. With £1,000 you're one unexpected bill away from credit card debt."},
+    {type:"choice",headline:"Where should your emergency fund live?",body:"You have £5,000 saved for emergencies and you're deciding where to keep it.",q:"Which option is best for an emergency fund?",
+     opts:["Stocks and shares ISA — better returns","In Bitcoin — high growth potential","Premium bonds — tax-free, government-backed","Easy-access savings account — available immediately, no risk of losing value"],ans:3,
+     ex:"An emergency fund must be immediately accessible with no risk of losing value. Stocks can drop 40% right before your boiler breaks. Easy-access savings accounts pay interest and you withdraw in minutes."},
+    {type:"reveal",headline:"Compound interest — your money working for you.",insight:"£1,000 at 5%/year: Year 1 earns £50 → £1,050. Year 2 earns £52.50 → £1,102.50. Year 10 = £1,629. Year 20 = £2,653. The interest earns interest. Starting at 20 vs 30 can mean hundreds of thousands of pounds difference by retirement."},
+    {type:"insight",headline:"Saving principles.",rules:[
+      {color:"#4F8EF7",rule:"Emergency fund first — always.",sub:"Before investing, before goals — build 3–6 months of expenses in cash you can access immediately."},
+      {color:"#0FD98A",rule:"Automate it.",sub:"Set a standing order to your savings account on payday. Remove the temptation to spend it first."},
+      {color:"#9D6EF8",rule:"Shop for the best savings rate.",sub:"A 5% easy-access account on £10,000 earns £500/year. Most people leave hundreds on the table by staying loyal to a low-rate bank."}
+    ]}
+  ]},
+
+  {id:"debt",num:3,icon:"💳",title:"Debt & Credit",desc:"Understand what debt really costs",color:"#F05252",xp:40,steps:[
+    {type:"reveal",headline:"Not all debt is equal.",insight:"High-interest debt (credit cards 20–30% APR, payday loans 1,000%+ APR) destroys wealth — the interest compounds against you. Low-interest debt (mortgages 4–6%) is manageable and sometimes necessary. First rule: eliminate high-interest debt as fast as possible."},
+    {type:"choice",headline:"The minimum payment trap.",body:"You owe £2,000 on a credit card at 25% APR. The minimum payment is £40/month.",q:"If you only pay the £40 minimum, what happens?",
+     opts:["It takes over 10 years and you pay nearly double in interest","You pay it off in roughly 5 years","The bank reduces your rate after 6 months","Minimums are designed to clear debt in 2 years"],ans:0,
+     ex:"Paying only minimums on high-interest debt is one of the most expensive mistakes possible. £2,000 at 25% APR with £40/month minimum takes ~12 years and costs ~£3,800 total. Always pay as much above the minimum as you can."},
+    {type:"choice",headline:"Two debts. £200/month to pay them off.",body:"Credit Card A: £1,500 at 28% APR. Personal Loan B: £4,000 at 8% APR.",q:"What is the smartest repayment strategy?",
+     opts:["Pay equal amounts to both","Focus all £200 on the credit card — highest interest rate costs most","Focus all £200 on the loan — bigger balance matters more","Consolidate first before paying anything"],ans:1,
+     ex:"The avalanche method: attack the highest interest rate first. 28% APR on £1,500 costs £420/year in interest. 8% on £4,000 costs £320. Clearing the credit card first saves the most money overall."},
+    {type:"reveal",headline:"Your credit score matters more than you think.",insight:"Credit score (0–999 in the UK) tells lenders how reliably you repay. A good score unlocks better mortgage rates — a 0.5% difference on a £200,000 mortgage over 25 years is worth over £15,000. Build good credit: pay on time, keep utilisation below 30%, don't apply for too many products at once."},
+    {type:"insight",headline:"Debt fundamentals.",rules:[
+      {color:"#F05252",rule:"Minimum payments are a trap.",sub:"Designed to keep you paying interest as long as possible. Always pay more than the minimum."},
+      {color:"#F5A623",rule:"Highest rate first.",sub:"Mathematically saves the most — clear the highest APR debt first, regardless of balance size."},
+      {color:"#0FD98A",rule:"Credit score = financial reputation.",sub:"Pay on time, every time. One missed payment stays on your record for 6 years."}
+    ]}
+  ]},
+
+  {id:"banking",num:4,icon:"🏛️",title:"Banking",desc:"Use banks smartly — they profit from your inertia",color:"#9D6EF8",xp:40,steps:[
+    {type:"reveal",headline:"How banks actually make money from you.",insight:"You deposit £1,000. The bank pays you 2% interest (£20/year). It lends that £1,000 to someone else at 7% (£70/year). The bank keeps the £50 difference — the net interest margin. This is why shopping around for savings rates matters. Your loyalty costs you money."},
+    {type:"choice",headline:"Payday. Credit card balance. No emergency fund.",body:"£2,200 hits your account. You have an £800 credit card balance at 24% APR, no emergency fund, and £200 left from last month.",q:"What should be your immediate priority?",
+     opts:["Invest in a Stocks ISA to start building wealth","Pay the minimum on the card and invest the rest","Put a significant amount toward the credit card — 24% APR costs more than any savings account earns","Move everything to a 4.5% savings account first"],ans:2,
+     ex:"24% APR debt costs more than 4.5% savings earn. Clearing £800 of credit card debt is a guaranteed 24% return — nothing beats that risk-free. Pay it aggressively before saving or investing anything."},
+    {type:"choice",headline:"What is an ISA?",body:"You're trying to decide where to put your savings.",q:"What does an ISA do that a standard savings account doesn't?",
+     opts:["It pays a higher guaranteed interest rate","It lets you save or invest up to £20,000/year completely tax-free","It is insured by the government for unlimited amounts","It allows you to withdraw money without penalty any time"],ans:1,
+     ex:"ISA = Individual Savings Account. £20,000/year allowance, all growth tax-free. A Cash ISA earns interest tax-free. A Stocks & Shares ISA lets investments grow without capital gains tax. Over decades the tax saving compounds into thousands."},
+    {type:"reveal",headline:"Overdrafts are expensive debt in disguise.",insight:"An arranged overdraft at 39.9% EAR on £500 used for 3 months costs roughly £50 in interest. Most people don't notice because it's built into their balance. An emergency fund of even £500–1,000 eliminates the need for an overdraft entirely — that's a guaranteed 39.9% return."},
+    {type:"insight",headline:"Banking smartly.",rules:[
+      {color:"#9D6EF8",rule:"Your bank is a business.",sub:"It profits from your inertia. Shop around for savings rates, current account perks, and mortgage deals."},
+      {color:"#0FD98A",rule:"Use your ISA allowance.",sub:"£20,000/year tax-free — one of the UK's most generous financial benefits. Most people never use it fully."},
+      {color:"#F5A623",rule:"Avoid overdrafts.",sub:"39.9% EAR is expensive. Even a £500 emergency fund eliminates the need for one."}
+    ]}
+  ]},
+
+  {id:"tax",num:5,icon:"🧾",title:"Tax & Income",desc:"Your payslip decoded — what you actually keep",color:"#F5A623",xp:50,steps:[
+    {type:"reveal",headline:"Your salary and your take-home pay are two different numbers.",insight:"A £30,000 salary (UK 2024): 20% income tax on earnings above £12,570 personal allowance = ~£3,486. Plus 8% National Insurance = ~£1,394. Take-home: ~£25,120/year or £2,093/month. Always plan your life on the after-tax number — the gross figure is misleading."},
+    {type:"choice",headline:"£2,000 pay rise — how much do you actually get?",body:"You're a basic rate taxpayer (20% income tax, 8% NI). Your employer gives you a £2,000 annual pay rise.",q:"How much extra hits your bank account each month?",
+     opts:["£166 — the full £2,000 divided by 12","£133 — only income tax deducted","About £120 — after 20% income tax and 8% NI","£200 — pay rises aren't taxed"],ans:2,
+     ex:"£2,000 gross: 20% tax = £400, 8% NI = £160. Net increase = £1,440/year ÷ 12 = £120/month. A £2,000 pay rise feels like a £1,440 one. Always negotiate knowing take-home is roughly 72% of gross for basic rate taxpayers."},
+    {type:"choice",headline:"Pension contributions — a hidden tax benefit.",body:"You earn £35,000. You contribute £2,000/year to your pension.",q:"What does that £2,000 pension contribution actually cost you as a 20% taxpayer?",
+     opts:["£2,000 — you pay the full amount","£1,600 — the government adds 20% tax relief on top of your contribution","£1,000 — pension contributions are only 50% taxed","£2,400 — you also pay NI on pension contributions"],ans:1,
+     ex:"For every £80 you put into a pension, the government adds £20 tax relief (20% of the gross £100). So a £2,000 contribution only costs you £1,600 out of pocket — the other £400 is government top-up. Higher rate taxpayers get 40% relief, making pensions even more powerful."},
+    {type:"reveal",headline:"Tax allowances most people leave unused.",insight:"Personal Allowance: first £12,570 of income tax-free. ISA: £20,000/year investment tax-free. Personal Savings Allowance: £1,000/year in savings interest tax-free (basic rate). Capital Gains Tax allowance: first £3,000 of investment gains tax-free. These are legal shelters that exist for you to use — most people ignore them."},
+    {type:"insight",headline:"Tax basics.",rules:[
+      {color:"#F5A623",rule:"Think net, not gross.",sub:"A £35,000 salary is roughly £28,000 take-home. Plan your life on the number that hits your account."},
+      {color:"#0FD98A",rule:"Use your allowances.",sub:"Personal allowance, ISA, pension — legal tax shelters that save thousands. They exist for you."},
+      {color:"#4F8EF7",rule:"Pension contributions cut your tax bill.",sub:"A £1,000 pension contribution costs a 20% taxpayer only £800. The government adds 20% on top — free money."}
+    ]}
+  ]},
+
+  {id:"investing",num:6,icon:"📈",title:"Investing Fundamentals",desc:"Risk, return, and how to think long-term",color:"#0FD98A",xp:50,steps:[
+    {type:"reveal",headline:"Why not just keep everything in cash?",insight:"Inflation averages 2–3%/year. A savings account at 1% earns less than inflation erodes — your money shrinks in real value. £10,000 in cash at 1% over 10 years = £11,046. The same at 7% (long-term stock market average) = £19,672. The cost of playing it safe over decades is enormous."},
+    {type:"choice",headline:"£5,000 to invest for 15 years.",body:"Option A: Cash savings account at 4% guaranteed. Option B: Global index fund averaging 8% historically — but could lose 30% in a bad year.",q:"Over 15 years, which builds more wealth?",
+     opts:["Cash — guaranteed returns, no stress","They end up roughly equal over 15 years","Cash — any loss in the index fund wipes out years of gains","The index fund — higher long-term return outweighs short-term volatility"],ans:3,
+     ex:"£5,000 at 4% for 15 years = £9,002. At 8% = £15,861. Short-term drops in the index fund are temporary — markets have always recovered historically. Over 15+ years, the higher return wins decisively."},
+    {type:"choice",headline:"When should you NOT invest?",body:"You have £3,000. No emergency fund. £800 on a credit card at 26% APR. Rent due in 3 weeks with no buffer.",q:"Should you invest the £3,000?",
+     opts:["Yes — start as early as possible","Yes — put half in, keep half as buffer","No — build emergency fund first, then clear high-interest debt, then invest","Only if the investment guarantees more than 26% return"],ans:2,
+     ex:"Investing before clearing 26% APR debt means your investment needs to return 26%+ just to break even. And with no emergency fund you might need to sell at the worst time. Order: emergency fund → high-interest debt → invest."},
+    {type:"reveal",headline:"Diversification — the only free lunch in investing.",insight:"One stock: one company decision can wipe you out. A global index fund holds thousands of companies across dozens of countries. Some go up, some go down — but the overall trend has been upward over every 15-year period in market history. Don't pick stocks. Own the whole market cheaply."},
+    {type:"insight",headline:"Investing fundamentals.",rules:[
+      {color:"#0FD98A",rule:"Time in market beats timing the market.",sub:"Invest regularly and stay invested. Missing the 10 best days in any decade cuts returns roughly in half."},
+      {color:"#4F8EF7",rule:"Fees destroy returns silently.",sub:"1% annual fee vs 0.1% over 30 years on £10,000 costs over £8,000 in lost growth. Choose low-cost index funds."},
+      {color:"#9D6EF8",rule:"Short-term drops are noise.",sub:"Every major market has dropped 30–50% at least once per decade. Every time it recovered. Stay the course."}
+    ]}
+  ]},
+
+  {id:"stocks",num:7,icon:"📊",title:"Stocks & Shares",desc:"How stock markets work — and how to use them",color:"#4F8EF7",xp:50,steps:[
+    {type:"reveal",headline:"A stock is ownership. A bond is a loan.",insight:"Buy a share = you own a tiny piece of a company. If it grows, your share is worth more. Buy a bond = you lend money to a company or government; they pay you fixed interest. Stocks: higher risk, higher long-term return. Bonds: lower risk, lower return. Most portfolios hold both depending on your time horizon."},
+    {type:"choice",headline:"Record profits. Stock drops 8%.",body:"A tech company announces profits up 20% year-on-year. Its stock drops 8% that afternoon.",q:"What is the most likely explanation?",
+     opts:["Markets made an error — prices will correct tomorrow","Record profits always cause short-term sell-offs","The market expected 30% growth; 20% fell short of expectations","The CEO must have sold shares before the announcement"],ans:2,
+     ex:"Stock prices reflect expectations, not raw results. The market had already priced in 30% growth. Getting 20% — objectively great — is a disappointment relative to what was expected. That gap between expectation and result is what moves prices."},
+    {type:"choice",headline:"Active fund vs index fund — which wins long-term?",body:"Over any 20-year period, roughly 85–90% of actively managed funds underperform their benchmark index after fees.",q:"What does this data suggest for most investors?",
+     opts:["Hire a top fund manager — the 10–15% prove it's possible","Day-trade yourself — professional managers have conflicts of interest","A low-cost global index fund — evidence overwhelmingly favours this over time","Keep cash — the uncertainty isn't worth it"],ans:2,
+     ex:"Most fund managers don't beat the index after fees. A global index fund costs 0.1–0.2%/year and outperforms most active funds over every long period measured. Boring, simple, and effective."},
+    {type:"allocate",headline:"Allocate £10,000 across investment options.",body:"You're investing £10,000 for 20+ years. Split it across these four options. Think about risk vs return for each time horizon.",
+     assets:[{id:"global",n:"Global Index Fund",hint:"Thousands of companies worldwide — broad, low-cost"},{id:"bonds",n:"Government Bonds",hint:"Lower risk, lower return — stability anchor"},{id:"cash",n:"Cash Savings",hint:"Safe but loses to inflation over 20 years"},{id:"single",n:"Single Stock Pick",hint:"High risk — one company failure = major loss"}]},
+    {type:"insight",headline:"Stock market principles.",rules:[
+      {color:"#4F8EF7",rule:"Own the whole market cheaply.",sub:"Global index funds: instant diversification across thousands of companies for 0.1–0.2%/year."},
+      {color:"#0FD98A",rule:"Volatility is not risk if you stay invested.",sub:"A 30% drop only becomes a permanent loss if you sell. Patient investors get rewarded."},
+      {color:"#F5A623",rule:"Reinvest dividends.",sub:"Reinvesting dividends rather than taking cash roughly doubles long-term returns through compounding."}
+    ]}
+  ]},
+
+  {id:"property",num:8,icon:"🏠",title:"Property & Mortgages",desc:"Renting vs buying — and what a mortgage really costs",color:"#F5A623",xp:50,steps:[
+    {type:"reveal",headline:"A mortgage is the biggest financial decision most people make.",insight:"£250,000 mortgage at 5% over 25 years: £1,461/month. Total repaid: £438,300 — that's £188,300 in interest. The same at 3%: £1,185/month and £355,500 total. A 2% rate difference saves over £80,000 over the term. The interest rate on a mortgage is the single most impactful number to negotiate."},
+    {type:"choice",headline:"Renting vs buying — which is better?",body:"You're 27. You can buy a £180,000 property with a £36,000 deposit. Mortgage: £900/month. Comparable rental: £950/month.",q:"Which statement is most accurate?",
+     opts:["Buying is always better — you build equity, not just pay a landlord","Renting is always better — flexibility and no repair costs","Buy immediately — house prices always go up","Neither is universally better — it depends on your timeline, local market, and total costs"],ans:3,
+     ex:"Buying makes sense if you plan to stay 5+ years, costs compare favourably, and you can handle maintenance. Renting makes sense for flexibility, mobility, or if house prices are very high relative to rents. Run the actual numbers for your situation."},
+    {type:"choice",headline:"Fixed vs variable rate mortgage.",body:"Option A: 2-year fixed at 4.5% — guaranteed rate. Option B: Variable tracker at 3.8% — follows Bank of England base rate.",q:"When does the fixed rate make more sense?",
+     opts:["Always — fixed is always safer","When you plan to sell within 6 months","When rates are already at their historic peak","When you expect interest rates to rise — the fixed rate locks you in below future rates"],ans:3,
+     ex:"If the Bank of England raises rates from 3% to 5.5%, a tracker gets very expensive fast. A fixed rate protects you for the fixed period. Trade-off: if rates fall, you're locked above market. Fixed = certainty. Variable = betting on rate direction."},
+    {type:"reveal",headline:"The hidden costs of buying.",insight:"Beyond the deposit: Stamp Duty (0–5%+ of purchase price), solicitor fees (~£1,500–3,000), survey (£500–1,500), mortgage arrangement fee (~£1,000–2,000). On a £250,000 first home, upfront costs beyond the deposit can reach £5,000–10,000. Many buyers are blindsided by this. Factor it into your savings target."},
+    {type:"insight",headline:"Property basics.",rules:[
+      {color:"#F5A623",rule:"Bigger deposit = lower rate.",sub:"A 10% deposit mortgage costs significantly more than a 25% one. Save longer if it means a better rate tier."},
+      {color:"#4F8EF7",rule:"Overpay when you can.",sub:"£200/month overpayment on a 25-year £200,000 mortgage saves ~£25,000 in interest and cuts 4 years off the term."},
+      {color:"#0FD98A",rule:"Don't borrow the maximum.",sub:"Banks lend up to 4.5× salary. Just because they'll lend it doesn't mean you should borrow it."}
+    ]}
+  ]},
+
+  {id:"business",num:9,icon:"💼",title:"Business Basics",desc:"How businesses work, profit, and grow",color:"#9D6EF8",xp:60,steps:[
+    {type:"reveal",headline:"Revenue vs profit — the most confused pair in business.",insight:"Revenue (turnover) = total money in before any costs. Profit = what remains after paying everything. A business can have £5M revenue and make a loss. A £200K revenue business can be highly profitable. The number that matters for survival is cash profit — not accounting profit on paper."},
+    {type:"choice",headline:"Profitable business. Goes bust.",body:"A small manufacturer reports £300,000 profit this year. Three months later it can't pay wages and enters administration.",q:"How is this possible?",
+     opts:["Accounts must have been fraudulent","The bank withdrew its credit line","It's not possible — profit guarantees solvency","Revenue was booked when invoiced but customers paid late — no cash to pay wages"],ans:3,
+     ex:"Cash flow differs from profit. Revenue is recorded when invoiced. If customers take 90 days to pay, the business shows profit on paper while having no cash for immediate bills. More businesses die from cash flow problems than lack of profit."},
+    {type:"choice",headline:"Startup raises funding. Founder diluted.",body:"Founder starts with 100%. Raises £500K for 20% equity. Then £2M for 25%. Then £5M for 30%.",q:"What does the founder own now?",
+     opts:["25% — simple subtraction from the last round","75% — only the last round dilutes you","100% — founders retain ownership regardless","Roughly 42% — each round dilutes the remaining stake, not the original 100%"],ans:3,
+     ex:"Each round dilutes everyone's existing stake. After Round 1: 80%. After Round 2: 80%×75% = 60%. After Round 3: 60%×70% = 42%. Dilution isn't simple subtraction — it compounds. 42% of a £50M company is still worth far more than 100% of a £500K one."},
+    {type:"allocate",headline:"Launch a business with £50,000. Allocate it.",body:"You're launching an online retail business. Split your starting capital across these four areas. Common early-stage priorities matter here.",
+     assets:[{id:"product",n:"Product & Inventory",hint:"You need something to sell"},{id:"marketing",n:"Marketing & Acquisition",hint:"Customers don't appear on their own"},{id:"tech",n:"Tech & Website",hint:"Your storefront — keep it lean early"},{id:"reserve",n:"Cash Reserve / Runway",hint:"Covers 3–6 months of operating costs"}]},
+    {type:"insight",headline:"Business fundamentals.",rules:[
+      {color:"#9D6EF8",rule:"Cash flow keeps the lights on.",sub:"Profit is a theory. Cash is a fact. Never let your bank balance drop below 3 months of operating costs."},
+      {color:"#F5A623",rule:"Revenue is vanity, profit is sanity.",sub:"A £10M revenue business losing money is less valuable than a £1M business making 40% margins."},
+      {color:"#0FD98A",rule:"Equity is ownership — protect it.",sub:"Every funding round dilutes you. Raise only what you need. The best funding is revenue from customers."}
+    ]}
+  ]},
+
+  {id:"economics",num:10,icon:"🌍",title:"Economics & You",desc:"How the wider economy affects your money",color:"#F05252",xp:60,steps:[
+    {type:"reveal",headline:"Inflation is a tax you didn't vote for.",insight:"At 5% annual inflation, money loses roughly half its purchasing power in 14 years. A salary that doesn't rise with inflation is a real pay cut every year. The Bank of England targets 2%. Above that: savings erode. Below 0% (deflation): people delay spending, slowing the whole economy. Both extremes cause real damage."},
+    {type:"choice",headline:"Interest rates rise. What does it mean for you?",body:"Bank of England raises base rate from 3.5% to 5.25%. You have: a £200,000 variable-rate mortgage, £5,000 savings, stable job.",q:"What is the net effect on your finances?",
+     opts:["Purely positive — savings rates go up","No impact — interest rates only affect banks","Purely negative — rising rates hurt everyone","Your mortgage costs more but savings earn more — net impact depends on your balances"],ans:3,
+     ex:"A tracker mortgage on £200,000 might rise from £950 to £1,250/month (+£300). Your £5,000 savings earns ~£262 more/year. Net = roughly -£3,338/year if the full rate passes through. Rising rates help savers and hurt borrowers — most households are net borrowers."},
+    {type:"choice",headline:"Recession. You still have your job. What do you do?",body:"Economy enters recession. House prices fall 10%, markets fall 20%, unemployment rises. You have a secure job, mortgage, and £8,000 in investments.",q:"What is the financially sound response?",
+     opts:["Sell investments to cash — stop further losses","Stop all saving until the economy recovers","Panic-buy assets while prices are low — timing is possible now","Maintain your plan — don't sell, keep investing, shore up emergency fund"],ans:3,
+     ex:"Market drops are temporary for long-term investors. Selling locks in the loss. Recessions are actually the best time to keep investing — you buy at lower prices. Shore up your emergency fund (job loss risk rises in recessions) and don't touch long-term investments."},
+    {type:"reveal",headline:"GDP, recession, and what it means for your life.",insight:"GDP = total value of everything a country produces. Rising GDP = more jobs, investment, rising wages. Recession (2+ quarters of falling GDP) = companies cut costs, hiring freezes, some fail. Your financial armour: 6-month emergency fund, low debt, marketable skills. The economy cycles — every recession eventually ends."},
+    {type:"insight",headline:"Economics and your money.",rules:[
+      {color:"#F05252",rule:"Inflation erodes wealth silently.",sub:"Money in low-interest accounts loses purchasing power every year. Keep it working in assets that outpace inflation."},
+      {color:"#4F8EF7",rule:"Recessions are predictable in one way: they happen.",sub:"Every 7–10 years on average. Build financial resilience before they arrive — not during."},
+      {color:"#0FD98A",rule:"Your biggest economic asset is your earning power.",sub:"Skills that keep you employable are worth more than any investment. Keep learning and adapt."}
+    ]}
+  ]}
+];
+
+// ─── LESSON SCREEN ────────────────────────────────────────────────────────────
+function LessonScreen({ onComplete, onXP, onNudge }) {
+  const [level, setLevel]   = useState(null);   // null = level picker
+  const [step, setStep]     = useState(0);
+  const [done, setDone]     = useState(()=>new Set());
+  const [sel, setSel]       = useState(null);
+  const [alloc, setAlloc]   = useState({});
+  const [selA, setSelA]     = useState(null);
+  const [flash, setFlash]   = useState(null);
+  const [xpShow, setXpShow] = useState(false);
+
+  // ── LEVEL PICKER ──────────────────────────────────────────────────────────
+  if(level===null){
+    return(
+      <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
+        <div style={{padding:"14px 18px 8px",flexShrink:0}}>
+          <div style={{fontFamily:"var(--ffm)",fontSize:8,color:"var(--t2)",letterSpacing:".12em",marginBottom:4}}>FINANCE FOUNDATIONS</div>
+          <div style={{fontFamily:"var(--ffd)",fontSize:20,fontWeight:800,letterSpacing:"-.02em",background:"linear-gradient(135deg,#fff 45%,#9D6EF8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>10 Levels</div>
+          <div style={{fontSize:12,color:"var(--t2)",marginTop:3}}>{done.size}/10 completed · {done.size*100} XP earned</div>
+        </div>
+        <div style={{flex:1,overflow:"auto",padding:"4px 18px 18px",display:"flex",flexDirection:"column",gap:9}}>
+          {FF_LEVELS.map((lv,i)=>{
+            const isDone=done.has(lv.id);
+            const locked=i>0&&!done.has(FF_LEVELS[i-1].id);
+            return(
+              <button key={lv.id} onClick={()=>{if(!locked){H.medium();setLevel(lv);setStep(0);setSel(null);setAlloc({});setSelA(null);}}} className="tap"
+                style={{display:"flex",alignItems:"center",gap:12,padding:"13px 14px",borderRadius:13,textAlign:"left",cursor:locked?"not-allowed":"pointer",
+                  background:isDone?"rgba(15,217,138,.07)":locked?"rgba(255,255,255,.015)":"var(--card)",
+                  border:`1px solid ${isDone?lv.color+"40":locked?"rgba(255,255,255,.05)":"var(--b1)"}`,
+                  opacity:locked?0.45:1,transition:"all .16s"}}>
+                <div style={{width:42,height:42,borderRadius:12,background:`${lv.color}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0,position:"relative"}}>
+                  {locked?"🔒":lv.icon}
+                  {isDone&&<div style={{position:"absolute",top:-4,right:-4,width:16,height:16,borderRadius:"50%",background:lv.color,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"#000",fontWeight:800}}>✓</div>}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:2}}>
+                    <span style={{fontFamily:"var(--ffm)",fontSize:8,color:"var(--t2)",letterSpacing:".08em"}}>LEVEL {lv.num}</span>
+                    <span style={{fontFamily:"var(--ffm)",fontSize:8,color:lv.color,letterSpacing:".06em"}}>+{lv.xp} XP</span>
+                  </div>
+                  <div style={{fontFamily:"var(--ffd)",fontSize:14,fontWeight:800,color:isDone?lv.color:"var(--t1)",letterSpacing:"-.01em"}}>{lv.title}</div>
+                  <div style={{fontSize:10.5,color:"var(--t2)",marginTop:1}}>{lv.desc}</div>
+                </div>
+                {!locked&&<div style={{fontSize:16,flexShrink:0,color:"var(--t2)"}}>{isDone?"↺":"→"}</div>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // ── STEP PLAYER ───────────────────────────────────────────────────────────
+  const slide=level.steps[step];
+  if(!slide) return null;
+  const totalAlloc=Object.values(alloc).reduce((a,b)=>a+b,0);
+  const assetIds=(slide.assets||[]).map(a=>a.id);
+
+  const pickChoice=(idx)=>{
+    if(sel!==null) return;
+    const correct=idx===slide.ans;
+    setSel(idx);
+    setFlash(correct?"correct":"wrong");
+    setTimeout(()=>setFlash(null),700);
+    if(correct){SFX.correct();H.success();onXP(15);setXpShow(true);setTimeout(()=>setXpShow(false),1300);onNudge(cue("correct"));}
+    else{SFX.wrong();H.error();onNudge(cue("wrong"));}
+  };
+
+  const advance=()=>{
+    H.light();SFX.step();
+    setSel(null);setSelA(null);
+    const newAlloc={};
+    assetIds.forEach(id=>{newAlloc[id]=0;});
+    setAlloc(newAlloc);
+    if(step<level.steps.length-1){setStep(s=>s+1);}
+    else{
+      onXP(level.xp);
+      setDone(prev=>{const n=new Set(prev);n.add(level.id);return n;});
+      setLevel(null);setStep(0);
+      if(done.size+1>=FF_LEVELS.length) onComplete();
+    }
+  };
+
+  const canAdvance=()=>{
+    if(slide.type==="choice") return sel!==null;
+    if(slide.type==="allocate") return totalAlloc===100;
+    return true;
+  };
+
+  const pct=Math.round(((step)/(level.steps.length))*100);
+
+  return(
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
+      {xpShow&&<div style={{position:"absolute",top:"12%",left:"50%",transform:"translateX(-50%)",zIndex:60,pointerEvents:"none",fontFamily:"var(--ffm)",fontSize:18,fontWeight:700,color:"#0FD98A",textShadow:"0 0 22px rgba(15,217,138,.9)",animation:"xp-burst 1.2s cubic-bezier(.34,1.56,.64,1) forwards",whiteSpace:"nowrap"}}>+15 XP ✓</div>}
+      {flash==="correct"&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 50% at 50% 30%,rgba(15,217,138,.1),transparent)",zIndex:50,pointerEvents:"none",animation:"fgreen .8s ease forwards"}}/>}
+      {flash==="wrong"&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 50% at 50% 30%,rgba(240,82,82,.09),transparent)",zIndex:50,pointerEvents:"none",animation:"fred .8s ease forwards"}}/>}
+
+      {/* Header */}
+      <div style={{padding:"10px 18px 6px",flexShrink:0,borderBottom:"1px solid var(--b1)"}}>
+        <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:7}}>
+          <button onClick={()=>{H.light();setLevel(null);setStep(0);setSel(null);}} className="tap"
+            style={{width:28,height:28,borderRadius:8,background:"rgba(255,255,255,.07)",border:"1px solid var(--b1)",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:14,color:"var(--t2)",flexShrink:0}}>←</button>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"var(--ffm)",fontSize:7.5,color:"var(--t2)",letterSpacing:".1em"}}>LEVEL {level.num} · {step+1}/{level.steps.length}</div>
+            <div style={{fontFamily:"var(--ffd)",fontSize:13,fontWeight:800,color:level.color}}>{level.title}</div>
+          </div>
+          <span style={{fontSize:18}}>{level.icon}</span>
+        </div>
+        <div style={{height:4,background:"rgba(255,255,255,.06)",borderRadius:2,overflow:"hidden"}}>
+          <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${level.color},${level.color}99)`,transition:"width .5s ease",boxShadow:`0 0 6px ${level.color}55`}}/>
+        </div>
+      </div>
+
+      <div key={`${level.id}-${step}`} style={{flex:1,overflow:"auto",padding:"12px 18px 8px",animation:"in .22s ease"}}>
+
+        {/* ── CHOICE ── */}
+        {slide.type==="choice"&&(
+          <>
+            <div style={{fontFamily:"var(--ffm)",fontSize:8,color:"var(--blue)",letterSpacing:".12em",marginBottom:5}}>SCENARIO</div>
+            <div style={{fontFamily:"var(--ffd)",fontSize:18,fontWeight:800,lineHeight:1.25,letterSpacing:"-.02em",marginBottom:7,background:"linear-gradient(135deg,#F2F0EE 55%,rgba(157,110,248,.7))",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{slide.headline}</div>
+            {slide.body&&<p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,marginBottom:12}}>{slide.body}</p>}
+            <div style={{fontFamily:"var(--ffd)",fontSize:13.5,fontWeight:700,marginBottom:9,color:"var(--t1)"}}>{slide.q}</div>
+            <div style={{display:"flex",flexDirection:"column",gap:7}}>
+              {slide.opts.map((o,i)=>{
+                const isC=sel!==null&&i===slide.ans;
+                const isW=sel===i&&i!==slide.ans;
+                const isDim=sel!==null&&i!==sel&&i!==slide.ans;
+                return(
+                  <button key={i} onClick={()=>pickChoice(i)} className="tap"
+                    style={{padding:"11px 13px",borderRadius:11,textAlign:"left",cursor:sel!==null?"default":"pointer",
+                      background:isC?"rgba(15,217,138,.11)":isW?"rgba(240,82,82,.1)":isDim?"rgba(255,255,255,.015)":"rgba(255,255,255,.04)",
+                      border:`1px solid ${isC?"rgba(15,217,138,.5)":isW?"rgba(240,82,82,.44)":isDim?"rgba(255,255,255,.04)":"rgba(255,255,255,.09)"}`,
+                      color:isC?"#0FD98A":isW?"#F05252":isDim?"#3a3a3a":"var(--t1)",
+                      fontFamily:"var(--ffb)",fontSize:13,display:"flex",alignItems:"center",gap:9,
+                      transition:"background .2s,border-color .2s,color .2s",
+                      animation:isW?"shake .4s ease":sel?"none":`opt-in .24s cubic-bezier(.34,1.56,.64,1) ${i*45}ms both`}}>
+                    <div style={{width:24,height:24,borderRadius:7,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",
+                      fontFamily:"var(--ffm)",fontSize:10,fontWeight:700,
+                      background:isC?"rgba(15,217,138,.2)":isW?"rgba(240,82,82,.18)":"rgba(255,255,255,.07)",
+                      color:isC?"#0FD98A":isW?"#F05252":"#555",transition:"all .2s"}}>
+                      {isC?"✓":isW?"✗":String.fromCharCode(65+i)}
+                    </div>
+                    {o}
+                  </button>
+                );
+              })}
+            </div>
+            {sel!==null&&slide.ex&&(
+              <div style={{marginTop:11,padding:"10px 13px",background:"rgba(79,142,247,.07)",border:"1px solid rgba(79,142,247,.2)",borderRadius:11,position:"relative",overflow:"hidden",animation:"slide-up .3s ease"}}>
+                <div style={{position:"absolute",top:0,left:0,width:3,height:"100%",background:"linear-gradient(180deg,#4F8EF7,#9D6EF8)",borderRadius:"11px 0 0 11px"}}/>
+                <div style={{fontFamily:"var(--ffm)",fontSize:7.5,color:"var(--blue)",letterSpacing:".14em",marginBottom:3}}>EXPLAINED</div>
+                <p style={{fontSize:12.5,lineHeight:1.65,color:"#D0D0D0"}}>{slide.ex}</p>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── REVEAL ── */}
+        {slide.type==="reveal"&&(
+          <div style={{animation:"pop .28s cubic-bezier(.34,1.56,.64,1)"}}>
+            <div style={{fontFamily:"var(--ffm)",fontSize:8,color:"var(--purple)",letterSpacing:".12em",marginBottom:5}}>INSIGHT</div>
+            <div style={{fontFamily:"var(--ffd)",fontSize:19,fontWeight:800,lineHeight:1.22,letterSpacing:"-.025em",marginBottom:12,background:"linear-gradient(135deg,#fff 45%,#9D6EF8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{slide.headline}</div>
+            {slide.body&&<p style={{fontSize:13,color:"var(--t2)",lineHeight:1.65,marginBottom:12}}>{slide.body}</p>}
+            <div style={{background:"rgba(157,110,248,.07)",border:"1px solid rgba(157,110,248,.2)",borderRadius:13,padding:"15px 15px",position:"relative",overflow:"hidden"}}>
+              <div style={{position:"absolute",top:0,left:0,width:3,height:"100%",background:"linear-gradient(180deg,#9D6EF8,#4F8EF7)",borderRadius:"13px 0 0 13px"}}/>
+              <p style={{fontSize:13.5,lineHeight:1.7,color:"#E0E0E0",fontWeight:500}}>{slide.insight}</p>
+            </div>
+          </div>
+        )}
+
+        {/* ── ALLOCATE ── */}
+        {slide.type==="allocate"&&(
+          <>
+            <div style={{fontFamily:"var(--ffm)",fontSize:8,color:"#F5A623",letterSpacing:".12em",marginBottom:5}}>ALLOCATION CHALLENGE</div>
+            <div style={{fontFamily:"var(--ffd)",fontSize:18,fontWeight:800,lineHeight:1.25,marginBottom:7,background:"linear-gradient(135deg,#F2F0EE 55%,rgba(245,166,35,.7))",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{slide.headline}</div>
+            <p style={{fontSize:13,color:"var(--t2)",lineHeight:1.6,marginBottom:10}}>{slide.body}</p>
+            <div style={{marginBottom:9}}>
+              <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}>
+                <span style={{fontSize:10.5,color:"var(--t2)"}}>{totalAlloc}% allocated{totalAlloc===100?" ✓":totalAlloc>100?" — over!":""}</span>
+                <span style={{fontFamily:"var(--ffm)",fontSize:9,color:totalAlloc===100?"#0FD98A":totalAlloc>100?"#F05252":"var(--t2)"}}>{totalAlloc}/100</span>
+              </div>
+              <div style={{height:4,background:"rgba(255,255,255,.06)",borderRadius:2,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${Math.min(100,totalAlloc)}%`,background:totalAlloc>100?"var(--red)":totalAlloc===100?"var(--green)":"var(--blue)",borderRadius:2,transition:"width .18s"}}/>
+              </div>
+            </div>
+            {(slide.assets||[]).map(a=>{
+              const p=alloc[a.id]||0;
+              const active=selA===a.id;
+              return(
+                <div key={a.id} style={{marginBottom:6}}>
+                  <button onClick={()=>{setSelA(active?null:a.id);H.light();}} className="tap"
+                    style={{width:"100%",padding:"10px 12px",borderRadius:10,textAlign:"left",cursor:"pointer",
+                      background:active?"rgba(79,142,247,.08)":p>0?"rgba(255,255,255,.04)":"rgba(255,255,255,.018)",
+                      border:`1.5px solid ${active?"rgba(79,142,247,.3)":p>0?"rgba(255,255,255,.09)":"rgba(255,255,255,.04)"}`,
+                      display:"flex",justifyContent:"space-between",alignItems:"center",gap:10,transition:"all .14s"}}>
+                    <div>
+                      <div style={{fontSize:13,fontWeight:600,color:"var(--t1)"}}>{a.n}</div>
+                      <div style={{fontSize:10,color:"var(--t2)",marginTop:1}}>{a.hint}</div>
+                    </div>
+                    <span style={{fontFamily:"var(--ffm)",fontSize:11,fontWeight:700,color:p>0?"var(--blue)":"var(--t2)",background:p>0?"rgba(79,142,247,.1)":"rgba(255,255,255,.04)",padding:"2px 9px",borderRadius:6,flexShrink:0}}>{p}%</span>
+                  </button>
+                  {active&&(
+                    <div style={{display:"flex",gap:4,padding:"6px 1px 1px",animation:"pop .12s ease"}}>
+                      {[0,10,25,50,75,100].map(pv=>(
+                        <button key={pv} onClick={()=>{setAlloc(v=>({...v,[a.id]:pv}));H.light();}} className="tap"
+                          style={{flex:1,padding:"6px 0",borderRadius:7,cursor:"pointer",
+                            background:p===pv?"rgba(79,142,247,.18)":"rgba(255,255,255,.04)",
+                            color:p===pv?"var(--blue)":"var(--t2)",
+                            fontFamily:"var(--ffm)",fontSize:10,fontWeight:p===pv?700:400,transition:"all .1s"}}>
+                          {pv===0?"✕":pv+"%"}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {/* ── INSIGHT RULES ── */}
+        {slide.type==="insight"&&(
+          <div style={{animation:"pop .28s cubic-bezier(.34,1.56,.64,1)"}}>
+            <div style={{fontFamily:"var(--ffm)",fontSize:8,color:"var(--green)",letterSpacing:".12em",marginBottom:5}}>KEY TAKEAWAYS</div>
+            <div style={{fontFamily:"var(--ffd)",fontSize:19,fontWeight:800,lineHeight:1.22,letterSpacing:"-.025em",marginBottom:14,background:"linear-gradient(135deg,#fff 45%,#0FD98A)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>{slide.headline}</div>
+            {(slide.rules||[]).map((r,i)=>(
+              <div key={i} style={{background:`${r.color}09`,border:`1px solid ${r.color}28`,borderRadius:12,padding:"13px 14px",marginBottom:9,position:"relative",overflow:"hidden",animation:`slide-up .38s cubic-bezier(.34,1.56,.64,1) ${i*80}ms both`}}>
+                <div style={{position:"absolute",top:0,left:0,width:3,height:"100%",background:r.color,borderRadius:"12px 0 0 12px"}}/>
+                <div style={{fontFamily:"var(--ffd)",fontSize:14,fontWeight:800,color:r.color,marginBottom:4}}>{r.rule}</div>
+                <div style={{fontSize:12.5,color:"#C0C0C0",lineHeight:1.6}}>{r.sub}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Advance button */}
+      {canAdvance()&&(
+        <div style={{padding:"8px 18px 14px",flexShrink:0,animation:"slide-up .28s cubic-bezier(.34,1.56,.64,1)"}}>
+          <button onClick={advance} className="tap glow"
+            style={{width:"100%",padding:"13px",borderRadius:12,
+              background:step===level.steps.length-1?`linear-gradient(135deg,${level.color},${level.color}99)`:"linear-gradient(135deg,#4F8EF7,#9D6EF8)",
+              color:"#fff",fontFamily:"var(--ffd)",fontSize:14,fontWeight:800,cursor:"pointer",
+              boxShadow:step===level.steps.length-1?`0 0 22px ${level.color}55`:"0 0 14px rgba(79,142,247,.28)"}}>
+            {step===level.steps.length-1?"Complete Level ✓":slide.type==="allocate"?(totalAlloc===100?"Confirm Allocation →":`Allocate all 100% (${totalAlloc}% done)`):"Next →"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SHARED ───────────────────────────────────────────────────────────────────
+const TICKS = [{ s: "BTC", v: "+4.2%", u: 1 }, { s: "GOLD", v: "+1.8%", u: 1 }, { s: "OIL", v: "-2.1%", u: 0 }, { s: "S&P", v: "+0.9%", u: 1 }, { s: "BONDS", v: "-0.5%", u: 0 }, { s: "TECH", v: "+3.1%", u: 1 }, { s: "EUR", v: "-0.2%", u: 0 }, { s: "SILVER", v: "+2.3%", u: 1 }, { s: "NATGAS", v: "-3.1%", u: 0 }];
+
+const Ticker = memo(() => (
+  <div style={{ overflow: "hidden", borderBottom: "1px solid var(--b1)", background: "rgba(6,6,6,.92)", padding: "5px 0", flexShrink: 0 }}>
+    <div style={{ display: "inline-flex", animation: "ticker 22s linear infinite", whiteSpace: "nowrap", willChange: "transform" }}>
+      {[...TICKS, ...TICKS].map((t, i) => (
+        <span key={i} style={{ display: "inline-flex", gap: 5, marginRight: 26, fontFamily: "var(--ffm)", fontSize: 10 }}>
+          <span style={{ color: "var(--t2)" }}>{t.s}</span>
+          <span style={{ color: t.u ? "var(--green)" : "var(--red)" }}>{t.v}</span>
+        </span>
+      ))}
+    </div>
+  </div>
+));
+
+const MiniChart = memo(({ data, color = "#3B82F6", h = 52 }) => {
+  const uid = useRef(`c${Math.random().toString(36).slice(2)}`).current;
+  if (!data || data.length < 2) return null;
+  const W = 300, pad = 5, mn = Math.min(...data), mx = Math.max(...data), rng = mx - mn || 1;
+  const pts = data.map((v, i) => [(i / (data.length - 1)) * W, h - ((v - mn) / rng) * (h - pad * 2) - pad]);
+  const line = pts.map((p, i) => `${i ? "L" : "M"} ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
+  const dl = pts.reduce((acc, p, i) => i ? acc + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0, 0) + 30;
+  const last = pts[pts.length - 1];
+  return (
+    <svg viewBox={`0 0 ${W} ${h}`} style={{ width: "100%", height: h, display: "block" }}>
+      <defs><linearGradient id={uid} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={color} stopOpacity=".15" /><stop offset="100%" stopColor={color} stopOpacity="0" /></linearGradient></defs>
+      <path d={`${line} L ${W} ${h} L 0 ${h} Z`} fill={`url(#${uid})`} />
+      <path d={line} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" style={{ strokeDasharray: dl, strokeDashoffset: dl, animation: "chart-draw 1s ease forwards" }} />
+      <circle cx={last[0]} cy={last[1]} r="3" fill={color} style={{ filter: `drop-shadow(0 0 4px ${color}90)` }} />
+    </svg>
+  );
+});
+
+const Burst = memo(({ active, color = "#10B981" }) => {
+  if (!active) return null;
+  return (
+    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 40, overflow: "hidden" }}>
+      {Array.from({ length: 12 }).map((_, i) => {
+        const a = (i / 12) * 360, d = 46 + Math.random() * 20;
+        return <div key={i} style={{ position: "absolute", top: "50%", left: "50%", width: 5, height: 5, borderRadius: "50%", background: color, "--bx": `${Math.cos(a * Math.PI / 180) * d}px`, "--by": `${Math.sin(a * Math.PI / 180) * d}px`, animation: `burst-p .6s ease-out ${i * 18}ms forwards` }} />;
+      })}
+    </div>
+  );
+});
+
+const XPBar = memo(({ xp, streak, delta }) => {
+  const lv = getLevel(xp), nxt = LEVELS[lv.idx + 1];
+  const pct = nxt ? ((xp - lv.min) / (nxt.min - lv.min)) * 100 : 100;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, background: "rgba(14,14,14,.96)", border: "1px solid var(--b2)", borderRadius: 10, padding: "5px 10px", position: "relative", flexShrink: 0 }}>
+      {delta > 0 && <div key={delta + xp} style={{ position: "absolute", top: -18, right: 4, fontFamily: "var(--ffm)", fontSize: 10, color: "var(--green)", fontWeight: 700, animation: "xp-rise .9s ease forwards", pointerEvents: "none" }}>+{delta}</div>}
+      <div>
+        <div style={{ fontSize: 7.5, color: lv.color, fontFamily: "var(--ffm)", letterSpacing: ".1em" }}>{lv.name.toUpperCase()}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 3 }}>
+          <div style={{ width: 56, height: 2.5, borderRadius: 2, background: "rgba(255,255,255,.07)", overflow: "hidden" }}>
+            <div style={{ height: "100%", width: `${pct}%`, background: `linear-gradient(90deg,${lv.color},#8B5CF6)`, transition: "width 1s cubic-bezier(.34,1.56,.64,1)", borderRadius: 2 }} />
+          </div>
+          <span style={{ fontSize: 10, color: lv.color, fontFamily: "var(--ffm)", fontWeight: 700 }}>{xp}</span>
+        </div>
+      </div>
+      {streak > 0 && <div style={{ display: "flex", alignItems: "center", gap: 2, background: "rgba(245,158,11,.1)", border: "1px solid rgba(245,158,11,.15)", borderRadius: 6, padding: "2px 6px" }}><span style={{ fontSize: 10, fontFamily: "var(--ffm)", color: "var(--amber)", fontWeight: 700 }}>{streak}🔥</span></div>}
+    </div>
+  );
+});
+
+function BackBtn({ onBack }) {
+  return (
+    <button onClick={onBack} className="tap" style={{ display: "flex", alignItems: "center", gap: 5, background: "rgba(255,255,255,.06)", border: "1px solid var(--b1)", borderRadius: 9, padding: "5px 11px 5px 8px", color: "var(--t2)", fontFamily: "var(--ffm)", fontSize: 11, cursor: "pointer", animation: "back-in .2s ease" }}>
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M8.5 10.5L4.5 6.5L8.5 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+      Back
+    </button>
+  );
+}
+
+function Ring({ s, total, size = 44 }) {
+  const r = 15, c = 2 * Math.PI * r, pct = s / total;
+  const col = s < 5 ? "var(--red)" : s < 10 ? "var(--amber)" : "var(--blue)";
+  return (
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <svg viewBox="0 0 36 36" style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
+        <circle cx="18" cy="18" r={r} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="2.5" />
+        <circle cx="18" cy="18" r={r} fill="none" stroke={col} strokeWidth="2.5" strokeDasharray={c} strokeDashoffset={c * (1 - pct)} strokeLinecap="round" style={{ transition: "stroke-dashoffset .85s linear,stroke .3s" }} />
+      </svg>
+      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--ffm)", fontSize: 11, fontWeight: 700, color: col }}>{s}</div>
+    </div>
+  );
+}
+
+// ─── AI TOAST ─────────────────────────────────────────────────────────────────
+function AIToast({ msg, onDone }) {
+  const [leaving, setLeaving] = useState(false);
+  useEffect(() => {
+    const t1 = setTimeout(() => setLeaving(true), 4000);
+    const t2 = setTimeout(onDone, 4400);
+    return () => { clearTimeout(t1); clearTimeout(t2); };
+  }, []);
+  return (
+    <div style={{ position: "absolute", bottom: 140, left: 12, right: 72, zIndex: 112, background: "rgba(9,9,18,.97)", border: "1px solid rgba(79,142,247,.26)", borderRadius: 13, padding: "11px 14px", display: "flex", alignItems: "flex-start", gap: 10, animation: leaving ? "toast-out .4s ease forwards" : "toast-in .3s cubic-bezier(.34,1.56,.64,1)", boxShadow: "0 6px 24px rgba(0,0,0,.55)" }}>
+      <div style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--blue)", flexShrink: 0, marginTop: 4, boxShadow: "0 0 8px rgba(79,142,247,.9)" }} />
+      <div>
+        <div style={{ fontFamily: "var(--ffm)", fontSize: 7.5, color: "var(--blue)", letterSpacing: ".12em", marginBottom: 3 }}>AI INSIGHT</div>
+        <div style={{ fontSize: 12.5, color: "var(--t1)", lineHeight: 1.5 }}>{msg}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── AI ASSISTANT ─────────────────────────────────────────────────────────────
+function AIAssistant({ open, onToggle, nudge, nudgeKey, scenario, hasNav, pulsing, autoMsg }) {
+  const [msgs, setMsgs] = useState([{ role: "assistant", text: "Ask me anything — finance, business, economics, investing. I'll explain it simply with real examples." }]);
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [showBub, setShowBub] = useState(false);
+  const [bubLeaving, setBubLeaving] = useState(false);
+  const scrollEl = useRef(null), inputEl = useRef(null), hideT = useRef(), leaveT = useRef();
+
+  useEffect(() => {
+    if (!autoMsg) return;
+    setMsgs(m => [...m, { role: "assistant", text: autoMsg, auto: true }]);
+  }, [autoMsg]);
+
+  useEffect(() => {
+    if (!nudge || open) return;
+    clearTimeout(hideT.current); clearTimeout(leaveT.current);
+    setBubLeaving(false); setShowBub(true);
+    hideT.current = setTimeout(() => { setBubLeaving(true); leaveT.current = setTimeout(() => setShowBub(false), 300); }, 4200);
+    return () => { clearTimeout(hideT.current); clearTimeout(leaveT.current); };
+  }, [nudge, nudgeKey, open]);
+
+  useEffect(() => { if (open) { setShowBub(false); setBubLeaving(false); } }, [open]);
+  useEffect(() => { scrollEl.current?.scrollTo({ top: scrollEl.current.scrollHeight, behavior: "smooth" }); }, [msgs, busy]);
+  useEffect(() => { if (open) { const t = setTimeout(() => inputEl.current?.focus(), 320); return () => clearTimeout(t); } }, [open]);
+
+  const send = async () => {
+    const text = input.trim(); if (!text || busy) return;
+    H.light(); setInput(""); setBusy(true);
+    const updated = [...msgs, { role: "user", text }];
+    setMsgs(updated);
+    const apiMsgs = updated.map(m => ({ role: m.role, content: m.text }));
+    try {
+      const reply = await callAI(apiMsgs,
+        `You are the AI inside MarketPlay, a finance learning game for 16-18 year olds.
+Answer ANY question the user has — finance, business, economics, investing, markets, money, startups, stocks, crypto, trading, debt, budgeting, etc.
+Tone: Smart, direct older sibling. Never textbook-boring.
+Rules: Under 70 words. Always include ONE specific real-world example (a company, number, country). No jargon without explanation.
+Current game context: ${scenario || "home screen"}.`
+      );
+      setMsgs(m => [...m, { role: "assistant", text: reply }]);
+    } catch (err) {
+      setMsgs(m => [...m, { role: "assistant", text: `Couldn't reach the AI: ${err.message}. Try again.` }]);
+    } finally { setBusy(false); }
+  };
+
+  const OB = hasNav ? 80 : 16, PB = OB + 52 + 10;
+  return (
+    <>
+      {showBub && nudge && (
+        <div style={{ position: "absolute", bottom: OB + 52 + 10, right: 66, maxWidth: 164, background: "rgba(12,12,12,.98)", border: "1px solid rgba(79,142,247,.22)", borderRadius: "12px 12px 4px 12px", padding: "9px 12px", fontSize: 12, color: "#E0E0E0", lineHeight: 1.45, boxShadow: "0 4px 18px rgba(0,0,0,.55)", zIndex: 118, textAlign: "right", pointerEvents: "none", animation: bubLeaving ? "bub-out .3s ease forwards" : "bub-in .28s cubic-bezier(.34,1.56,.64,1)" }}>
+          {nudge}
+        </div>
+      )}
+
+      {/* Chat panel */}
+      <div style={{ position: "absolute", bottom: PB, right: 14, width: "min(340px,calc(100% - 28px))", height: "38vh", background: "rgba(9,9,14,.98)", border: "1px solid var(--b2)", borderRadius: 16, display: "flex", flexDirection: "column", overflow: "hidden", boxShadow: "0 -4px 36px rgba(0,0,0,.75)", zIndex: 115, opacity: open ? 1 : 0, transform: open ? "none" : "translateY(16px) scale(.97)", pointerEvents: open ? "auto" : "none", transition: "opacity .24s ease,transform .26s cubic-bezier(.34,1.56,.64,1)" }}>
+        <div style={{ padding: "10px 13px 8px", borderBottom: "1px solid var(--b1)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 20, height: 20, borderRadius: "50%", background: "radial-gradient(circle at 35% 35%,#4F8EF7,#9D6EF8)", flexShrink: 0 }} />
+            <span style={{ fontFamily: "var(--ffd)", fontSize: 12.5, fontWeight: 700 }}>Ask anything</span>
+          </div>
+          <button onClick={() => { H.light(); onToggle(); }} style={{ background: "rgba(255,255,255,.06)", borderRadius: 6, padding: "3px 10px", color: "var(--t2)", fontSize: 10.5, cursor: "pointer" }}>close</button>
+        </div>
+        <div ref={scrollEl} style={{ flex: 1, overflow: "auto", padding: "9px 12px", display: "flex", flexDirection: "column", gap: 7 }}>
+          {msgs.map((m, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start", animation: "pop .18s ease" }}>
+              <div style={{ maxWidth: "90%", padding: "8px 11px", fontSize: 12.5, lineHeight: 1.52, borderRadius: m.role === "user" ? "10px 10px 3px 10px" : "10px 10px 10px 3px", background: m.auto ? "rgba(79,142,247,.07)" : m.role === "user" ? "rgba(79,142,247,.13)" : "rgba(255,255,255,.04)", border: m.auto ? "1px solid rgba(79,142,247,.18)" : m.role === "user" ? "1px solid rgba(79,142,247,.22)" : "1px solid var(--b1)", color: "var(--t1)" }}>
+                {m.auto && <div style={{ fontFamily: "var(--ffm)", fontSize: 7, color: "var(--blue)", letterSpacing: ".1em", marginBottom: 3 }}>AUTO INSIGHT</div>}
+                {m.text}
+              </div>
+            </div>
+          ))}
+          {busy && (
+            <div style={{ display: "flex" }}>
+              <div style={{ padding: "8px 12px", background: "rgba(255,255,255,.04)", border: "1px solid var(--b1)", borderRadius: "10px 10px 10px 3px", display: "flex", gap: 4, alignItems: "center" }}>
+                {[0, 1, 2].map(i => <div key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--t2)", animation: `dots .9s ease-in-out ${i * .16}s infinite` }} />)}
+              </div>
+            </div>
+          )}
+        </div>
+        <div style={{ padding: "7px 10px 10px", borderTop: "1px solid var(--b1)", display: "flex", gap: 6, alignItems: "center", flexShrink: 0 }}>
+          <input ref={inputEl} value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && send()}
+            placeholder="What is a stock? How does inflation work?"
+            style={{ flex: 1, height: 36, background: "rgba(255,255,255,.05)", border: "1px solid var(--b2)", borderRadius: 9, padding: "0 11px", color: "var(--t1)", fontSize: 12.5 }}
+            onFocus={e => e.target.style.borderColor = "rgba(79,142,247,.45)"}
+            onBlur={e => e.target.style.borderColor = "var(--b2)"} />
+          <button onClick={send} disabled={!input.trim() || busy} style={{ width: 36, height: 36, borderRadius: 9, flexShrink: 0, background: input.trim() && !busy ? "linear-gradient(135deg,#4F8EF7,#9D6EF8)" : "rgba(255,255,255,.07)", color: "#fff", fontSize: 15, cursor: input.trim() && !busy ? "pointer" : "default", display: "flex", alignItems: "center", justifyContent: "center", transition: "background .2s" }}>→</button>
+        </div>
+      </div>
+
+      {/* Glowing Orb */}
+      <div style={{ position: "absolute", bottom: OB, right: 16, display: "flex", flexDirection: "column", alignItems: "center", gap: 4, zIndex: 120 }}>
+        <button onClick={() => { H.medium(); onToggle(); }} style={{ width: 50, height: 50, borderRadius: "50%", background: "radial-gradient(circle at 36% 34%,#4F8EF7,#9D6EF8)", animation: pulsing ? "orb-pulse .7s ease" : "orb-float 3.2s ease-in-out infinite", willChange: "transform,box-shadow", display: "flex", alignItems: "center", justifyContent: "center", outline: open ? "2.5px solid rgba(79,142,247,.55)" : "none", outlineOffset: 2, border: "none", cursor: "pointer", position: "relative", boxShadow: pulsing ? "0 0 0 0 rgba(79,142,247,.9)" : "0 0 16px rgba(79,142,247,.5),0 0 32px rgba(157,110,248,.2)", transition: "outline .2s,box-shadow .3s" }}>
+          <div style={{ width: "38%", height: "38%", borderRadius: "50%", background: "rgba(255,255,255,.87)", filter: "blur(2px)", pointerEvents: "none" }} />
+          {open && <div style={{ position: "absolute", inset: 0, borderRadius: "50%", border: "2px solid rgba(79,142,247,.55)", animation: "ripple .75s ease-out", pointerEvents: "none" }} />}
+          <div style={{ position: "absolute", bottom: 1, right: 1, width: 12, height: 12, borderRadius: "50%", background: open ? "var(--blue)" : "var(--green)", border: "2.5px solid var(--bg)", transition: "background .25s", pointerEvents: "none" }} />
+        </button>
+        <span style={{ fontFamily: "var(--ffm)", fontSize: 7, color: "rgba(79,142,247,.65)", letterSpacing: ".07em", whiteSpace: "nowrap" }}>AI {open ? "active" : "ready"}</span>
+      </div>
+    </>
+  );
+}
+
+// ─── CHALLENGE ────────────────────────────────────────────────────────────────
+const TRACK_META = {
+  money: { name:"Money Basics", color:"#0FD98A", icon:"💰",
+    tips:[
+      "Paying yourself first means moving savings out the moment you're paid — before spending anything.",
+      "A credit score above 700 can save you thousands on mortgage rates and loan approvals.",
+      "The 50/30/20 rule: 50% on needs, 30% on wants, 20% on savings or debt repayment.",
+      "Missing a single loan or credit card payment can affect your credit record for up to 6 years.",
+      "An emergency fund of 3–6 months of expenses means one setback doesn't force you into debt."
+    ]},
+  stocks: { name:"Stock Market", color:"#4F8EF7", icon:"📈",
+    tips:[
+      "A share is a unit of ownership in a company — shareholders are literally part-owners of the business.",
+      "Index funds hold hundreds of companies at once, giving you instant diversification for very low fees.",
+      "P/E ratio tells you how much investors pay per £1 of a company's annual earnings.",
+      "A bull market means share prices are rising steadily; a bear market means they're falling.",
+      "Dividends are a company's way of sharing profits directly with its shareholders."
+    ]},
+  biz: { name:"Business", color:"#F5A623", icon:"💼",
+    tips:[
+      "Revenue is total money in. Profit is what's left after every cost is paid. They are never the same.",
+      "Cash flow is more important than profit — profitable businesses fail every year due to cash running out.",
+      "Break-even is when revenue exactly covers costs. Every sale after that point is profit.",
+      "A sole trader is personally liable for all business debts. A limited company separates personal assets.",
+      "Every funding round dilutes the founder's stake — but a smaller % of a bigger company can be worth far more."
+    ]},
+  econ: { name:"Economics", color:"#9D6EF8", icon:"🏦",
+    tips:[
+      "GDP measures the total value of everything a country produces — it's the main scorecard for economic health.",
+      "Inflation means prices rise over time, so the same money buys less. Central banks target 2% in the UK.",
+      "Two consecutive quarters of shrinking GDP = a recession. Recessions are self-reinforcing once they start.",
+      "When the Bank of England raises interest rates, borrowing gets more expensive across the whole economy.",
+      "Supply and demand determines almost every price in a market economy — more demand or less supply means higher prices."
+    ]},
+};
+
+function ChallengeScreen({ onComplete, onXP, onNudge, sessionCount, onAutoAI, onChallengeResult, filterTrack }) {
+  const questions = useMemo(() => {
+    if (filterTrack) {
+      // Track-specific: show 6 questions from just this track, shuffled
+      const pool = _shuf(QS.filter(q => q.track === filterTrack));
+      return pool.slice(0, 6).map(_shuffleOpts);
+    }
+    return pickChallengeQ();
+  }, [sessionCount, filterTrack]);
+  const [qi, setQi] = useState(0);
+  const [sel, setSel] = useState(null);
+  const [score, setScore] = useState(0);
+  const [streak, setStreak] = useState(0);
+  const [done, setDone] = useState(false);
+  const [burst, setBurst] = useState(false);
+  const [xpShow, setXpShow] = useState(false);
+  const [flash, setFlash] = useState(null);
+  const [confetti, setConfetti] = useState([]);
+  const [trackRes, setTrackRes] = useState({});
+  const q = questions[qi];
+  if (!q) return null;
+
+  const pick = useCallback(i => {
+    if (sel !== null) return;
+    const correct = i === q.ans;
+    if (correct) { SFX.correct(); H.success(); } else { SFX.wrong(); H.error(); }
+    setSel(i); setFlash(correct ? "correct" : "wrong"); setTimeout(() => setFlash(null), 800);
+    setTrackRes(prev => {
+      const p = prev[q.track] || { correct:0, total:0 };
+      return { ...prev, [q.track]: { correct: p.correct+(correct?1:0), total: p.total+1 } };
+    });
+    if (correct) {
+      const ns = streak+1; setStreak(ns); setScore(s=>s+1);
+      setBurst(true); setTimeout(()=>setBurst(false),900);
+      setXpShow(true); setTimeout(()=>setXpShow(false),1300);
+      const cols=["#0FD98A","#4F8EF7","#F5A623","#9D6EF8","#F05252"];
+      setConfetti(Array.from({length:14},(_,k)=>({id:k,color:cols[k%5],x:5+k*6.5,delay:k*.04,r:90+k*25})));
+      setTimeout(()=>setConfetti([]),1300);
+      onXP(10+ns*5); onNudge(cue("correct"));
+    } else {
+      setStreak(0); onNudge(cue("wrong"));
+      onAutoAI(`Incorrect — the right answer: "${q.opts[q.ans]}". ${q.ex.split('.')[0]}.`);
+    }
+  }, [sel,q,streak,onXP,onNudge,onAutoAI]);
+
+  const next = () => {
+    H.light(); SFX.step();
+    if (qi < questions.length-1) { setQi(q=>q+1); setSel(null); setConfetti([]); }
+    else {
+      setDone(true); SFX.complete(); onXP(score*15+30);
+      setTrackRes(tr => { onChallengeResult && onChallengeResult(tr); return tr; });
+    }
+  };
+
+  // ── RESULTS PAGE ────────────────────────────────────────────────────────────
+  if (done) {
+    const total = questions.length;
+    const pct = Math.round((score/total)*100);
+    const weakTracks   = Object.keys(trackRes).filter(t=>trackRes[t].total>0 && trackRes[t].correct/trackRes[t].total < 1);
+    const strongTracks = Object.keys(trackRes).filter(t=>trackRes[t].total>0 && trackRes[t].correct===trackRes[t].total);
+    return (
+      <div style={{flex:1,overflow:"auto",padding:"16px 18px 24px",animation:"in .4s ease"}}>
+        <Burst active color="#F5A623"/>
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{fontSize:46,marginBottom:10,animation:"drop .5s cubic-bezier(.34,1.56,.64,1)"}}>{pct===100?"🏆":pct>=75?"🎯":pct>=50?"🎓":"📚"}</div>
+          <div style={{position:"relative",width:96,height:96,margin:"0 auto 14px"}}>
+            <svg viewBox="0 0 100 100" style={{position:"absolute",inset:0,transform:"rotate(-90deg)"}}>
+              <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.07)" strokeWidth="7"/>
+              <circle cx="50" cy="50" r="42" fill="none" stroke={pct>=75?"#0FD98A":"#4F8EF7"} strokeWidth="7" strokeLinecap="round"
+                strokeDasharray={`${(score/total)*264} 264`} style={{transition:"stroke-dasharray 1s ease"}}/>
+            </svg>
+            <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+              <div style={{fontFamily:"var(--ffd)",fontSize:24,fontWeight:800}}>{score}/{total}</div>
+              <div style={{fontFamily:"var(--ffm)",fontSize:9,color:"var(--t2)"}}>{pct}%</div>
+            </div>
+          </div>
+          <div style={{fontFamily:"var(--ffd)",fontSize:17,fontWeight:800,marginBottom:6,color:pct===100?"#F5A623":pct>=75?"#0FD98A":"#4F8EF7"}}>
+            {pct===100?"Perfect score!":pct>=75?"Really sharp.":pct>=50?"Solid effort.":"Keep grinding."}
+          </div>
+          <div style={{display:"inline-block",background:"rgba(15,217,138,.08)",border:"1px solid rgba(15,217,138,.2)",borderRadius:9,padding:"5px 18px",fontFamily:"var(--ffm)",fontSize:11,color:"#0FD98A",fontWeight:700}}>+{score*15+30} XP</div>
+        </div>
+
+        {/* Topic breakdown */}
+        <div style={{marginBottom:12}}>
+          <div style={{fontFamily:"var(--ffm)",fontSize:8,color:"var(--t2)",letterSpacing:".12em",marginBottom:8}}>BREAKDOWN BY TOPIC</div>
+          {["money","stocks","biz","econ"].map(tid => {
+            const ts=trackRes[tid]; if(!ts) return null;
+            const tm=TRACK_META[tid]; const tp=Math.round((ts.correct/ts.total)*100);
+            const col=tp===100?"#0FD98A":tp>=50?"#F5A623":"#F05252";
+            return (
+              <div key={tid} style={{background:"var(--card)",border:`1px solid ${col}22`,borderRadius:11,padding:"10px 13px",marginBottom:6}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5}}>
+                  <div style={{display:"flex",alignItems:"center",gap:8}}>
+                    <span style={{fontSize:16}}>{tm.icon}</span>
+                    <div>
+                      <div style={{fontFamily:"var(--ffd)",fontSize:12.5,fontWeight:700,color:"var(--t1)"}}>{tm.name}</div>
+                      <div style={{fontFamily:"var(--ffm)",fontSize:8,color:"var(--t2)",marginTop:1}}>{ts.correct}/{ts.total} correct</div>
+                    </div>
+                  </div>
+                  <div style={{fontFamily:"var(--ffm)",fontSize:13,fontWeight:700,color:col}}>{tp}%</div>
+                </div>
+                <div style={{height:4,background:"rgba(255,255,255,.06)",borderRadius:2,overflow:"hidden"}}>
+                  <div style={{height:"100%",width:`${tp}%`,background:`linear-gradient(90deg,${col},${col}77)`,borderRadius:2,transition:"width 1s ease"}}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Study these areas */}
+        {weakTracks.length>0 && (
+          <div style={{marginBottom:12}}>
+            <div style={{fontFamily:"var(--ffm)",fontSize:8,color:"var(--t2)",letterSpacing:".12em",marginBottom:8}}>STUDY THESE AREAS</div>
+            {weakTracks.map(tid => {
+              const tm=TRACK_META[tid]; const ts=trackRes[tid];
+              const tip=tm.tips[Math.floor(Math.random()*tm.tips.length)];
+              const wrongQs=QS.filter(q=>q.track===tid).slice(0,2);
+              return (
+                <div key={tid} style={{background:`${tm.color}08`,border:`1px solid ${tm.color}28`,borderRadius:13,padding:"13px 14px",marginBottom:8}}>
+                  <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:8}}>
+                    <span style={{fontSize:15}}>{tm.icon}</span>
+                    <div style={{fontFamily:"var(--ffm)",fontSize:8,color:tm.color,letterSpacing:".1em",fontWeight:700}}>{tm.name.toUpperCase()} · NEEDS WORK</div>
+                    <div style={{marginLeft:"auto",fontFamily:"var(--ffm)",fontSize:8,color:"#F05252",background:"rgba(240,82,82,.1)",padding:"2px 7px",borderRadius:5}}>{ts.correct}/{ts.total}</div>
+                  </div>
+                  <div style={{fontSize:12.5,color:"#CCC",lineHeight:1.68,marginBottom:8}}>💡 {tip}</div>
+                  <div style={{height:1,background:`${tm.color}20`,marginBottom:8}}/>
+                  <div style={{fontFamily:"var(--ffm)",fontSize:7.5,color:tm.color,letterSpacing:".06em",marginBottom:6}}>KEY QUESTIONS TO REVISIT</div>
+                  {wrongQs.map((wq,i)=>(
+                    <div key={i} style={{marginTop:5,paddingLeft:10,borderLeft:`2px solid ${tm.color}40`}}>
+                      <div style={{fontSize:11.5,color:"var(--t2)",lineHeight:1.5}}>{wq.q}</div>
+                      <div style={{fontSize:10.5,color:tm.color,marginTop:2,fontWeight:600}}>→ {wq.opts[wq.ans]}</div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Strengths */}
+        {strongTracks.length>0 && (
+          <div style={{marginBottom:16}}>
+            <div style={{fontFamily:"var(--ffm)",fontSize:8,color:"var(--t2)",letterSpacing:".12em",marginBottom:7}}>YOUR STRENGTHS</div>
+            <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+              {strongTracks.map(tid=>{
+                const tm=TRACK_META[tid];
+                return <div key={tid} style={{display:"flex",alignItems:"center",gap:6,background:`${tm.color}12`,border:`1px solid ${tm.color}30`,borderRadius:20,padding:"5px 13px"}}>
+                  <span style={{fontSize:14}}>{tm.icon}</span>
+                  <span style={{fontFamily:"var(--ffd)",fontSize:11.5,color:tm.color,fontWeight:700}}>{tm.name}</span>
+                  <span style={{fontFamily:"var(--ffm)",fontSize:9,color:"#0FD98A"}}>100%</span>
+                </div>;
+              })}
+            </div>
+          </div>
+        )}
+
+        <button onClick={onComplete} className="tap glow" style={{width:"100%",padding:"15px",borderRadius:13,background:"linear-gradient(135deg,#4F8EF7,#9D6EF8)",color:"#fff",fontFamily:"var(--ffd)",fontSize:14,fontWeight:800,cursor:"pointer",boxShadow:"0 0 22px rgba(79,142,247,.35)"}}>Back to Home →</button>
+      </div>
+    );
+  }
+
+  // ── QUESTION SCREEN ─────────────────────────────────────────────────────────
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden",position:"relative"}}>
+      {confetti.map(cn=><div key={cn.id} style={{position:"absolute",top:-10,left:`${cn.x}%`,width:6,height:6,borderRadius:2,background:cn.color,"--r":`${cn.r}deg`,animation:`confetti .85s ease ${cn.delay}s forwards`,pointerEvents:"none"}}/>)}
+      {flash==="correct"&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 50% at 50% 30%,rgba(15,217,138,.1),transparent)",zIndex:50,pointerEvents:"none",animation:"fgreen .8s ease forwards"}}/>}
+      {flash==="wrong"&&<div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 50% at 50% 30%,rgba(240,82,82,.09),transparent)",zIndex:50,pointerEvents:"none",animation:"fred .8s ease forwards"}}/>}
+      {xpShow&&<div style={{position:"absolute",top:"14%",left:"50%",zIndex:60,transform:"translateX(-50%)",pointerEvents:"none",fontFamily:"var(--ffm)",fontSize:22,fontWeight:700,color:"#0FD98A",textShadow:"0 0 24px rgba(15,217,138,.9)",animation:"xp-burst 1.2s cubic-bezier(.34,1.56,.64,1) forwards",whiteSpace:"nowrap"}}>+{10+streak*5} XP{streak>1?` 🔥${streak}x`:""}</div>}
+
+      {/* Progress bar */}
+      <div style={{padding:"11px 18px 7px",flexShrink:0,display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"1px solid rgba(255,255,255,.04)"}}>
+        <div style={{display:"flex",gap:5,alignItems:"center"}}>
+          {questions.map((_,i)=><div key={i} style={{width:i===qi?22:i<qi?10:7,height:7,borderRadius:4,background:i===qi?"linear-gradient(90deg,#4F8EF7,#9D6EF8)":i<qi?"#0FD98A":"rgba(255,255,255,.1)",transition:"all .35s cubic-bezier(.34,1.56,.64,1)",boxShadow:i===qi?"0 0 8px rgba(79,142,247,.7)":i<qi?"0 0 5px rgba(15,217,138,.4)":"none"}}/>)}
+          <span style={{fontFamily:"var(--ffm)",fontSize:9,color:"var(--t2)",marginLeft:4}}>{qi+1}/{questions.length}</span>
+        </div>
+        {streak>=2&&<div style={{display:"flex",alignItems:"center",gap:3,background:"rgba(245,166,35,.14)",border:"1px solid rgba(245,166,35,.3)",borderRadius:20,padding:"3px 10px",animation:"streak-fire .5s ease-in-out infinite alternate"}}><span style={{fontFamily:"var(--ffd)",fontSize:11,color:"#F5A623",fontWeight:800}}>🔥 {streak}x streak</span></div>}
+      </div>
+
+      <div key={qi} style={{flex:1,overflow:"auto",padding:"12px 18px 4px"}}>
+        {filterTrack&&TRACK_META[filterTrack]&&(<div style={{marginBottom:8,padding:"6px 10px",background:`${TRACK_META[filterTrack].color}10`,borderRadius:8,border:`1px solid ${TRACK_META[filterTrack].color}25`,display:"flex",alignItems:"center",gap:6}}><span style={{fontSize:11}}>{TRACK_META[filterTrack].icon}</span><span style={{fontFamily:"var(--ffm)",fontSize:8,color:TRACK_META[filterTrack].color,letterSpacing:".1em"}}>PRACTISING: {TRACK_META[filterTrack].name.toUpperCase()}</span></div>)}
+        {(()=>{const tm=TRACK_META[q.track];return tm?<div style={{marginBottom:10}}><span style={{fontFamily:"var(--ffm)",fontSize:8,color:tm.color,background:`${tm.color}18`,borderRadius:20,padding:"3px 10px",border:`1px solid ${tm.color}30`}}>{tm.icon} {tm.name}</span></div>:null;})()}
+        <div style={{fontFamily:"var(--ffd)",fontSize:17,fontWeight:800,lineHeight:1.3,letterSpacing:"-.02em",marginBottom:14,background:"linear-gradient(135deg,#F2F0EE 55%,rgba(157,110,248,.7))",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",animation:"q-in .3s ease"}}>{q.q}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8,position:"relative"}}>
+          <Burst active={burst} color="#0FD98A"/>
+          {q.opts.map((o,i)=>{
+            const isC=sel!==null&&i===q.ans, isW=sel===i&&i!==q.ans, isDim=sel!==null&&i!==q.ans&&i!==sel;
+            return <button key={i} onClick={()=>pick(i)} className="tap" style={{padding:"12px 14px",borderRadius:12,background:isC?"rgba(15,217,138,.11)":isW?"rgba(240,82,82,.1)":isDim?"rgba(255,255,255,.016)":"rgba(255,255,255,.04)",border:isC?"1px solid rgba(15,217,138,.5)":isW?"1px solid rgba(240,82,82,.42)":isDim?"1px solid rgba(255,255,255,.04)":"1px solid rgba(255,255,255,.09)",color:isC?"#0FD98A":isW?"#F05252":isDim?"rgba(255,255,255,.25)":"var(--t1)",fontFamily:"var(--ffb)",fontSize:12.5,fontWeight:500,textAlign:"left",cursor:sel!==null?"default":"pointer",display:"flex",alignItems:"center",gap:10,transition:"all .2s",animation:isW?"shake .4s ease":sel!==null?"none":`opt-in .24s cubic-bezier(.34,1.56,.64,1) ${i*55}ms both`,position:"relative",overflow:"hidden",boxShadow:isC?"0 0 14px rgba(15,217,138,.15)":"none"}}>
+              {isC&&<div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,rgba(15,217,138,.08),transparent)",animation:"sweep .38s ease",transformOrigin:"left",pointerEvents:"none"}}/>}
+              <div style={{width:26,height:26,borderRadius:8,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--ffm)",fontSize:10,fontWeight:700,background:isC?"rgba(15,217,138,.2)":isW?"rgba(240,82,82,.18)":"rgba(255,255,255,.08)",color:isC?"#0FD98A":isW?"#F05252":"rgba(255,255,255,.4)",transition:"all .2s"}}>
+                {isC?"✓":isW?"✗":String.fromCharCode(65+i)}
+              </div>
+              {o}
+            </button>;
+          })}
+        </div>
+        {sel!==null&&q.ex&&(
+          <div style={{marginTop:11,padding:"11px 14px",background:"rgba(79,142,247,.07)",border:"1px solid rgba(79,142,247,.2)",borderRadius:12,animation:"slide-up .35s cubic-bezier(.34,1.56,.64,1)",position:"relative",overflow:"hidden"}}>
+            <div style={{position:"absolute",top:0,left:0,width:3,height:"100%",background:"linear-gradient(180deg,#4F8EF7,#9D6EF8)",borderRadius:"3px 0 0 3px"}}/>
+            <div style={{fontFamily:"var(--ffm)",fontSize:7.5,color:"var(--blue)",letterSpacing:".14em",marginBottom:4,paddingLeft:10}}>EXPLAINED</div>
+            <p style={{fontSize:12.5,lineHeight:1.65,color:"#D0D0D0",paddingLeft:10}}>{q.ex}</p>
+          </div>
+        )}
+      </div>
+
+      {sel!==null&&(
+        <div style={{padding:"8px 18px 14px",flexShrink:0,animation:"slide-up .28s cubic-bezier(.34,1.56,.64,1)"}}>
+          <button onClick={next} className="tap glow" style={{width:"100%",padding:"14px",borderRadius:13,background:sel===q.ans?"linear-gradient(135deg,#0FD98A,#4F8EF7)":"linear-gradient(135deg,#4F8EF7,#9D6EF8)",color:"#fff",fontFamily:"var(--ffd)",fontSize:14,fontWeight:800,cursor:"pointer",boxShadow:sel===q.ans?"0 0 22px rgba(15,217,138,.36)":"0 0 16px rgba(79,142,247,.26)"}}>
+            {qi===questions.length-1?"See My Results →":sel===q.ans?"Nice! Next →":"Next →"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── TRADE ────────────────────────────────────────────────────────────────────
+function TradeScreen({ onXP, onNudge, onScenario, onAutoAI }) {
+  const [round, setRound] = useState(0);
+  const session = useMemo(() => genSession(), [round]);
+  const [alloc, setAlloc] = useState({});
+  const [selA, setSelA] = useState(null);
+  const [phase, setPhase] = useState("decide");
+  const [paths, setPaths] = useState({});
+  const [result, setResult] = useState(null);
+  const [animAt, setAnimAt] = useState(-1);
+
+  useEffect(() => {
+    const o = {}; session.assets.forEach(a => { o[a.id] = 0; }); setAlloc(o);
+    setSelA(null); setPhase("decide"); setPaths({}); setResult(null); setAnimAt(-1);
+    onNudge(cue("trade")); onScenario(session.headline);
+  }, [session]);
+
+  const total = Object.values(alloc).reduce((a, b) => a + b, 0);
+
+
+
+  const execute = useCallback(() => {
+    H.medium(); setPhase("simulate");
+    const np = {}; session.assets.forEach(a => { np[a.id] = pricePath(16, a.expected, a.vol, Math.random()); });
+    setPaths(np);
+    let i = 0;
+    const iv = setInterval(() => { setAnimAt(i); i++; if (i >= session.assets.length) { clearInterval(iv); buildResult(np); } }, 360);
+  }, [session, alloc]);
+
+  const buildResult = p => {
+    const rets = {}; let portfolio = 0;
+    session.assets.forEach(a => {
+      const path = p[a.id], ret = +((path[path.length - 1] - path[0]) / path[0] * 100).toFixed(1);
+      rets[a.id] = ret; portfolio += (alloc[a.id] / 100) * ret;
+    });
+    const port = +portfolio.toFixed(1);
+    setResult({ rets, port }); setPhase("result");
+    onXP(Math.max(8, Math.round(Math.abs(port) * 1.8 + 12)));
+    const maxAlloc = Math.max(...session.assets.map(a => alloc[a.id]));
+    const topAsset = session.assets.find(a => alloc[a.id] === maxAlloc);
+    if (port < -5) onAutoAI(`Portfolio down ${Math.abs(port)}%. In a ${session.key} scenario, safe havens like gold and bonds typically outperform.`);
+    else if (port < 0 && topAsset) onAutoAI(`Slight negative. You were heavy in ${topAsset.n} — check how that reacts in ${session.key} events.`);
+    else if (maxAlloc >= 75 && port > 0) onAutoAI(`Worked this time, but ${maxAlloc}% in one asset is overexposed. Concentration is risk.`);
+    onNudge(port > 5 ? cue("correct") : port > 0 ? "Thin edge. Study the drivers." : cue("wrong"));
+  };
+
+  if (phase === "simulate") return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: 18, gap: 12, animation: "in .28s ease" }}>
+      <div style={{ fontFamily: "var(--ffd)", fontSize: 19, fontWeight: 800 }}>Simulating...</div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        {session.assets.map((a, i) => {
+          const ready = i <= animAt, col = a.expected > 0 ? "#10B981" : a.expected < 0 ? "#EF4444" : "#888";
+          return (
+            <div key={a.id} style={{ background: "var(--card)", border: `1px solid ${ready ? "var(--b2)" : "var(--b1)"}`, borderRadius: 10, padding: "10px 9px", opacity: ready ? 1 : .18, transform: ready ? "scale(1)" : "scale(.95)", transition: "opacity .3s,transform .3s" }}>
+              <div style={{ fontSize: 10, color: "var(--t2)", marginBottom: 6, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}><AssetIcon id={a.id} size={18} /><span style={{ color: "var(--t1)" }}>{a.n}</span></div>
+                {ready && <span style={{ color: col, fontFamily: "var(--ffm)", fontSize: 9, fontWeight: 700 }}>{a.expected > 0 ? "↑" : a.expected < 0 ? "↓" : "→"}</span>}
+              </div>
+              {ready && paths[a.id] && <MiniChart data={paths[a.id]} color={col} h={36} />}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  if (phase === "result" && result) return (
+    <div style={{ flex: 1, overflow: "auto", padding: "0 18px 18px", animation: "in .32s ease" }}>
+      <div style={{ textAlign: "center", padding: "18px 0 14px", borderBottom: "1px solid var(--b1)" }}>
+        <div style={{ fontFamily: "var(--ffm)", fontSize: 8, color: "var(--t2)", letterSpacing: ".1em", marginBottom: 4 }}>YOUR RETURN</div>
+        <div style={{ fontFamily: "var(--ffd)", fontSize: 50, fontWeight: 800, letterSpacing: "-.04em", lineHeight: 1, color: result.port > 0 ? "var(--green)" : "var(--red)", animation: "pop .4s cubic-bezier(.34,1.56,.64,1)" }}>{result.port > 0 ? "+" : ""}{result.port}%</div>
+        <div style={{ marginTop: 6, fontSize: 12, color: "var(--t2)" }}>{result.port > 10 ? "Strong read on the scenario." : result.port > 3 ? "Decent. Check the reasoning." : result.port > 0 ? "Thin edge. Study the drivers." : "The market humbled you. Good."}</div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", marginTop: 10 }}>
+        {session.assets.map(a => {
+          const r = result.rets[a.id], ap = alloc[a.id], contrib = +((ap / 100) * r).toFixed(2);
+          return (
+            <div key={a.id} style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,.03)", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+              <div style={{ display: "flex", gap: 9, alignItems: "center", flex: 1, minWidth: 0 }}>
+                <AssetIcon id={a.id} size={32} />
+                <div><div style={{ fontSize: 12.5, fontWeight: 600, color: "var(--t1)" }}>{a.n}</div><div style={{ fontSize: 10, color: "var(--t2)", marginTop: 1 }}>{a.hint}</div></div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1.5, flexShrink: 0 }}>
+                <span style={{ fontFamily: "var(--ffm)", fontSize: 12, fontWeight: 700, color: r > 0 ? "var(--green)" : "var(--red)" }}>{r > 0 ? "+" : ""}{r}%</span>
+                {ap > 0 && <span style={{ fontSize: 9, color: "var(--t2)", fontFamily: "var(--ffm)" }}>{ap}% → {contrib > 0 ? "+" : ""}{contrib}%</span>}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <button onClick={() => setRound(r => r + 1)} className="tap glow" style={{ width: "100%", marginTop: 18, padding: "14px", borderRadius: 12, background: "linear-gradient(135deg,#4F8EF7,#9D6EF8)", color: "#fff", fontFamily: "var(--ffd)", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 0 16px rgba(79,142,247,.26)" }}>
+        Next Round →
+      </button>
+    </div>
+  );
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+      <div style={{ margin: "10px 18px 0", padding: "12px 14px", background: `${session.color}0A`, border: `1px solid ${session.color}22`, borderRadius: 12, flexShrink: 0 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, fontFamily: "var(--ffd)", marginBottom: 2 }}>{session.headline}</div>
+        <div style={{ fontSize: 11, color: "var(--t2)", lineHeight: 1.45 }}>{session.sub}</div>
+      </div>
+      <div style={{ flex: 1, overflow: "auto", padding: "10px 18px 0", display: "flex", flexDirection: "column", gap: 5 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 10.5, color: "var(--t2)", marginBottom: 4 }}>{total}% allocated{total === 100 ? " ✓" : total > 100 ? " — over limit" : ""}</div>
+            <div style={{ height: 3, background: "rgba(255,255,255,.06)", borderRadius: 2, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${Math.min(100, total)}%`, background: total > 100 ? "var(--red)" : total === 100 ? "var(--green)" : "var(--blue)", borderRadius: 2, transition: "width .2s" }} />
+            </div>
+          </div>
+        </div>
+        {session.assets.map(a => {
+          const active = selA === a.id, pct = alloc[a.id];
+          return (
+            <div key={a.id}>
+              <button onClick={() => { setSelA(active ? null : a.id); H.light(); }} className="tap" style={{ width: "100%", padding: "10px 12px", borderRadius: 10, textAlign: "left", cursor: "pointer", background: active ? "rgba(79,142,247,.09)" : pct > 0 ? "rgba(255,255,255,.045)" : "rgba(255,255,255,.02)", border: active ? "1.5px solid rgba(79,142,247,.32)" : pct > 0 ? "1.5px solid rgba(255,255,255,.09)" : "1.5px solid rgba(255,255,255,.04)", transition: "all .16s", display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10 }}>
+                <div style={{ display: "flex", gap: 9, alignItems: "center", flex: 1, minWidth: 0 }}>
+                  <AssetIcon id={a.id} size={34} />
+                  <div><div style={{ fontSize: 13, fontWeight: 600, color: "var(--t1)" }}>{a.n}</div><div style={{ fontSize: 10, color: "var(--t2)", marginTop: 1 }}>{a.hint}</div></div>
+                </div>
+                <span style={{ fontFamily: "var(--ffm)", fontSize: 11, fontWeight: 700, color: pct > 0 ? "var(--blue)" : "var(--t2)", background: pct > 0 ? "rgba(79,142,247,.1)" : "rgba(255,255,255,.04)", padding: "2px 9px", borderRadius: 6, flexShrink: 0 }}>{pct}%</span>
+              </button>
+              {active && (
+                <div style={{ display: "flex", gap: 5, padding: "7px 2px 2px", animation: "pop .14s ease" }}>
+                  {[0, 25, 50, 75, 100].map(p => (
+                    <button key={p} onClick={() => { setAlloc(v => ({ ...v, [a.id]: p })); H.light(); }} className="tap" style={{ flex: 1, padding: "7px 0", borderRadius: 8, cursor: "pointer", background: pct === p ? "rgba(79,142,247,.18)" : "rgba(255,255,255,.05)", color: pct === p ? "var(--blue)" : "var(--t2)", fontFamily: "var(--ffm)", fontSize: 11, fontWeight: pct === p ? 700 : 400, border: "none", transition: "all .12s" }}>{p === 0 ? "✕" : p + "%"}</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div style={{ padding: "10px 18px 14px", flexShrink: 0 }}>
+        <button onClick={execute} className="tap glow" style={{ width: "100%", padding: "14px", borderRadius: 12, background: "linear-gradient(135deg,#4F8EF7,#9D6EF8)", color: "#fff", fontFamily: "var(--ffd)", fontSize: 14, fontWeight: 700, cursor: "pointer", boxShadow: "0 0 16px rgba(79,142,247,.24)" }}>
+          Execute Trade →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── HOME ─────────────────────────────────────────────────────────────────────
+function HomeScreen({ xp, streak, onNavigate, sessionCount, onOpenAI, challengeScores }) {
+  const lv = getLevel(xp);
+  const [iIdx, setIIdx] = useState(0);
+  const [iVis, setIVis] = useState(true);
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      setIVis(false);
+      setTimeout(() => { setIIdx(i => (i+1)%AI_INSIGHTS.length); setIVis(true); }, 380);
+    }, 7500);
+    return () => clearInterval(iv);
+  }, []);
+
+  const trackPct = tid => {
+    const ts = challengeScores[tid];
+    if (!ts || ts.total===0) return null;
+    return Math.round((ts.correct/ts.total)*100);
+  };
+  const trackLabel = pct => pct===null ? "No data yet" : pct<40 ? "Needs work" : pct<70 ? "Building" : pct<90 ? "Proficient" : "Advanced";
+
+  return (
+    <div style={{flex:1,overflow:"auto",padding:"12px 18px 90px"}}>
+      {/* Header */}
+      <div style={{marginBottom:14,animation:"in .26s ease"}}>
+        <div style={{fontFamily:"var(--ffm)",fontSize:8,color:"var(--t2)",letterSpacing:".12em"}}>TODAY'S BRIEF</div>
+        <h1 style={{fontFamily:"var(--ffd)",fontSize:23,fontWeight:800,letterSpacing:"-.025em",marginTop:3,lineHeight:1.1}}>Sharpen your edge.</h1>
+      </div>
+
+      {/* Level card */}
+      <div style={{background:`linear-gradient(135deg,${lv.color}12,rgba(139,92,246,.06))`,border:`1px solid ${lv.color}22`,borderRadius:13,padding:"12px 15px",marginBottom:10,animation:"in .26s ease .04s both",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontFamily:"var(--ffm)",fontSize:7.5,color:lv.color,letterSpacing:".1em"}}>{lv.name.toUpperCase()}</div>
+          <div style={{fontFamily:"var(--ffd)",fontSize:17,fontWeight:800,marginTop:2}}>{lv.name}</div>
+          <div style={{fontFamily:"var(--ffm)",fontSize:9,color:"var(--t2)",marginTop:2}}>{xp} XP · {sessionCount} challenge{sessionCount!==1?"s":""} completed</div>
+        </div>
+        <div style={{width:36,height:36,borderRadius:10,background:`${lv.color}20`,border:`1px solid ${lv.color}35`,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"var(--ffm)",fontSize:13,fontWeight:700,color:lv.color}}>★</div>
+      </div>
+
+      {/* Talk to our personalised AI banner */}
+      <div style={{background:"linear-gradient(135deg,rgba(79,142,247,.1),rgba(157,110,248,.07))",border:"1px solid rgba(79,142,247,.32)",borderRadius:16,padding:"14px 14px 12px",marginBottom:10,animation:"in .26s ease .06s both",position:"relative",overflow:"hidden"}}>
+        <div style={{position:"absolute",top:-24,right:-24,width:110,height:110,borderRadius:"50%",background:"radial-gradient(circle,rgba(157,110,248,.18),transparent 70%)",pointerEvents:"none"}}/>
+        <div style={{display:"flex",alignItems:"center",gap:11,marginBottom:10}}>
+          <div style={{position:"relative",flexShrink:0}}>
+            <div style={{width:46,height:46,borderRadius:"50%",background:"radial-gradient(circle at 36% 34%,#4F8EF7,#9D6EF8)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 18px rgba(79,142,247,.5),0 0 36px rgba(157,110,248,.2)",animation:"orb-float 3.2s ease-in-out infinite"}}>
+              <div style={{width:"38%",height:"38%",borderRadius:"50%",background:"rgba(255,255,255,.87)",filter:"blur(2px)"}}/>
+            </div>
+            <div style={{position:"absolute",bottom:1,right:1,width:11,height:11,borderRadius:"50%",background:"#0FD98A",border:"2.5px solid var(--bg)",animation:"orb-pulse 2s ease infinite"}}/>
+          </div>
+          <div style={{flex:1}}>
+            <div style={{fontFamily:"var(--ffd)",fontSize:15,fontWeight:800,background:"linear-gradient(135deg,#fff 30%,#9D6EF8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",lineHeight:1.2}}>Talk to our personalised AI</div>
+            <div style={{fontSize:10.5,color:"var(--t2)",marginTop:3}}>Finance · Business · Markets — ask anything</div>
+          </div>
+        </div>
+        <div style={{fontSize:12.5,color:"#CCC",lineHeight:1.58,marginBottom:10,opacity:iVis?1:0,transform:iVis?"none":"translateY(4px)",transition:"opacity .32s,transform .32s",minHeight:38,fontStyle:"italic"}}>
+          💬 "{AI_INSIGHTS[iIdx]}"
+        </div>
+        <button onClick={()=>{H.light();onOpenAI();}} className="tap glow" style={{width:"100%",padding:"10px 14px",borderRadius:11,background:"linear-gradient(135deg,rgba(79,142,247,.2),rgba(157,110,248,.16))",border:"1px solid rgba(79,142,247,.4)",cursor:"pointer",color:"#fff",fontFamily:"var(--ffd)",fontSize:12.5,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:8}}>
+          Open AI Chat →
+        </button>
+      </div>
+
+      {/* Quick actions */}
+      {[
+        {icon:"📚",title:"Finance Foundations",sub:"6-step guided lesson · Why prices move",cta:"Start lesson",screen:"lesson",accent:"#4F8EF7",badge:"+125 XP",delay:.08},
+        {icon:"⚡",title:"Live Trade Sim",sub:"Real scenario · Allocate your portfolio",cta:"Enter market",screen:"trade",accent:"#9D6EF8",badge:"XP",delay:.11},
+        {icon:"🧠",title:"Challenge Mode",sub:"Test your knowledge · Learn from weak areas",cta:"Take challenge",screen:"challenge",accent:"#0FD98A",badge:"+XP",delay:.14},
+      ].map(cv=>(
+        <div key={cv.screen} onClick={()=>{H.light();onNavigate(cv.screen);}} className="tap" style={{background:"var(--card)",border:"1px solid var(--b1)",borderRadius:12,padding:"12px 14px",marginBottom:8,cursor:"pointer",animation:`in .26s ease ${cv.delay}s both`}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+            <div style={{display:"flex",gap:10,alignItems:"flex-start"}}>
+              <div style={{width:36,height:36,borderRadius:9,background:`${cv.accent}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}}>{cv.icon}</div>
+              <div><div style={{fontFamily:"var(--ffd)",fontSize:14,fontWeight:700}}>{cv.title}</div><div style={{fontSize:10.5,color:"var(--t2)",marginTop:2}}>{cv.sub}</div></div>
+            </div>
+            <div style={{fontFamily:"var(--ffm)",fontSize:8,color:cv.accent,background:`${cv.accent}14`,padding:"2px 7px",borderRadius:5,flexShrink:0}}>{cv.badge}</div>
+          </div>
+          <div style={{marginTop:9,padding:"7px 12px",borderRadius:8,background:`${cv.accent}15`,color:cv.accent,fontFamily:"var(--ffd)",fontSize:11.5,fontWeight:700,textAlign:"center"}}>{cv.cta} →</div>
+        </div>
+      ))}
+
+      {/* Skill Tracks — based on real challenge results */}
+      <div style={{marginTop:4,marginBottom:8,animation:"in .26s ease .18s both"}}>
+        <div style={{fontFamily:"var(--ffm)",fontSize:8,color:"var(--t2)",letterSpacing:".12em",marginBottom:9}}>SKILL TRACKS · From your challenge results</div>
+        {TRACKS.map(tk => {
+          const pct = trackPct(tk.id);
+          const lbl = trackLabel(pct);
+          const col = pct===null ? "rgba(255,255,255,.15)" : pct<40 ? "#F05252" : pct<70 ? "#F5A623" : "#0FD98A";
+          return (
+            <div key={tk.id} onClick={()=>{H.light();onNavigate("challenge", {track: tk.id});}} className="tap" style={{background:"var(--card)",border:"1px solid var(--b1)",borderRadius:12,padding:"11px 13px",marginBottom:7,cursor:"pointer"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:7}}>
+                <div style={{display:"flex",gap:9,alignItems:"center"}}>
+                  <div style={{width:30,height:30,borderRadius:8,background:`${tk.color}18`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15}}>{tk.icon}</div>
+                  <div>
+                    <div style={{fontFamily:"var(--ffd)",fontSize:12.5,fontWeight:700}}>{tk.name}</div>
+                    <div style={{fontSize:9.5,color:"var(--t2)",marginTop:1}}>{tk.desc}</div>
+                  </div>
+                </div>
+                <div style={{textAlign:"right",flexShrink:0,marginLeft:8}}>
+                  <div style={{fontFamily:"var(--ffm)",fontSize:9,color:col,fontWeight:700}}>{lbl}</div>
+                  <div style={{fontFamily:"var(--ffm)",fontSize:7.5,color:"var(--t2)",marginTop:1}}>{pct!==null?`${pct}% accuracy`:"Take a challenge"}</div>
+                </div>
+              </div>
+              <div style={{height:3,background:"rgba(255,255,255,.06)",borderRadius:2,overflow:"hidden"}}>
+                <div style={{height:"100%",width:`${pct||0}%`,background:`linear-gradient(90deg,${col},${col}77)`,borderRadius:2,transition:"width 1.1s ease",boxShadow:`0 0 5px ${col}55`}}/>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Weakest Area card */}
+      {(()=>{
+        const tracks=["money","stocks","biz","econ"];
+        const scored=tracks.filter(t=>challengeScores[t]&&challengeScores[t].total>0);
+        if(scored.length===0){
+          return(
+            <div style={{background:"var(--card)",border:"1px solid var(--b1)",borderRadius:13,padding:"14px 15px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:40,height:40,borderRadius:11,background:"rgba(79,142,247,.1)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,flexShrink:0}}>🎯</div>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"var(--ffd)",fontSize:13,fontWeight:700,color:"var(--t1)"}}>No data yet</div>
+                <div style={{fontSize:11,color:"var(--t2)",marginTop:2}}>Complete a challenge to unlock your personalised weak area tip.</div>
+              </div>
+            </div>
+          );
+        }
+        const weakest=scored.reduce((a,t)=>{
+          const pct=challengeScores[t].correct/challengeScores[t].total;
+          return pct<(challengeScores[a]?challengeScores[a].correct/challengeScores[a].total:1)?t:a;
+        },scored[0]);
+        const tm=TRACK_META[weakest];
+        const tip=tm.tips[Math.floor(Math.random()*tm.tips.length)];
+        const pct=Math.round((challengeScores[weakest].correct/challengeScores[weakest].total)*100);
+        return(
+          <div style={{background:"var(--card)",border:`1px solid ${tm.color}30`,borderRadius:13,padding:"14px 15px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:10}}>
+              <div style={{width:36,height:36,borderRadius:10,background:`${tm.color}15`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,flexShrink:0}}>{tm.icon}</div>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"var(--ffm)",fontSize:7.5,color:"var(--t2)",letterSpacing:".1em"}}>YOUR WEAKEST AREA</div>
+                <div style={{fontFamily:"var(--ffd)",fontSize:14,fontWeight:800,color:tm.color}}>{tm.name} · {pct}%</div>
+              </div>
+            </div>
+            <div style={{fontSize:12,color:"var(--t2)",lineHeight:1.55,marginBottom:11,padding:"9px 11px",background:"rgba(255,255,255,.025)",borderRadius:9,borderLeft:`3px solid ${tm.color}55`}}>💡 {tip}</div>
+            <button onClick={()=>{H.medium();onNavigate("challenge");}} className="tap" style={{width:"100%",padding:"10px",borderRadius:10,background:`linear-gradient(135deg,${tm.color}22,${tm.color}10)`,border:`1px solid ${tm.color}35`,color:tm.color,fontFamily:"var(--ffd)",fontSize:12.5,fontWeight:800,cursor:"pointer"}}>Study it now →</button>
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+
+// ─── INTRO ────────────────────────────────────────────────────────────────────
+function IntroScreen({ onStart, challengeScores }) {
+  const hasScores = Object.values(challengeScores).some(ts => ts && ts.total > 0);
+  const tracks = ["money","stocks","biz","econ"];
+
+  return (
+    <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"28px 22px 36px",textAlign:"center",overflow:"auto"}}>
+
+      {/* Logo */}
+      <div style={{marginBottom:10,animation:"rise .5s cubic-bezier(.34,1.56,.64,1) both"}}>
+        <div style={{width:64,height:64,borderRadius:18,background:"linear-gradient(135deg,#4F8EF7,#9D6EF8)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 12px",boxShadow:"0 0 28px rgba(79,142,247,.4)",animation:"orb-float 3.5s ease-in-out infinite"}}>
+          <span style={{fontSize:28}}>📈</span>
+        </div>
+        <div style={{fontFamily:"var(--ffd)",fontSize:28,fontWeight:800,letterSpacing:"-.03em",background:"linear-gradient(135deg,#fff 40%,#9D6EF8)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>MarketPlay</div>
+        <div style={{fontFamily:"var(--ffm)",fontSize:8.5,color:"var(--t2)",letterSpacing:".15em",marginTop:4}}>LEARN · TRADE · GROW</div>
+      </div>
+
+      <div style={{fontSize:13.5,color:"var(--t2)",lineHeight:1.6,maxWidth:260,marginBottom:18,animation:"rise .5s cubic-bezier(.34,1.56,.64,1) 90ms both"}}>
+        Finance, markets and business explained through real scenarios. Track your skill level. Close your gaps.
+      </div>
+
+      {/* Skill snapshot — only if challenge has been completed */}
+      {hasScores && (
+        <div style={{width:"100%",background:"rgba(255,255,255,.03)",border:"1px solid var(--b1)",borderRadius:14,padding:"13px 14px",marginBottom:14,animation:"rise .5s cubic-bezier(.34,1.56,.64,1) 180ms both"}}>
+          <div style={{fontFamily:"var(--ffm)",fontSize:7.5,color:"var(--t2)",letterSpacing:".1em",marginBottom:10,textAlign:"left"}}>YOUR SKILL SNAPSHOT</div>
+          <div style={{display:"flex",flexDirection:"column",gap:7}}>
+            {tracks.map(tid => {
+              const tk = TRACK_META[tid];
+              const ts = challengeScores[tid];
+              const pct = ts && ts.total > 0 ? Math.round((ts.correct/ts.total)*100) : null;
+              const col = pct === null ? "rgba(255,255,255,.12)" : pct >= 70 ? "#0FD98A" : pct >= 40 ? "#F5A623" : "#F05252";
+              const lbl = pct === null ? "Not tried" : pct >= 70 ? "Proficient" : pct >= 40 ? "Building" : "Needs work";
+              return (
+                <div key={tid} style={{display:"flex",alignItems:"center",gap:9}}>
+                  <span style={{fontSize:14,flexShrink:0}}>{tk.icon}</span>
+                  <div style={{flex:1,textAlign:"left"}}>
+                    <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                      <span style={{fontFamily:"var(--ffd)",fontSize:11,fontWeight:700,color:"var(--t1)"}}>{tk.name}</span>
+                      <span style={{fontFamily:"var(--ffm)",fontSize:9,color:pct===null?"var(--t2)":col}}>{lbl}{pct!==null?" · "+pct+"%":""}</span>
+                    </div>
+                    <div style={{height:4,background:"rgba(255,255,255,.06)",borderRadius:2,overflow:"hidden"}}>
+                      <div style={{height:"100%",width:`${pct||0}%`,background:col,borderRadius:2,transition:"width 1s ease"}}/>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* AI Banner */}
+      <div style={{width:"100%",background:"linear-gradient(135deg,rgba(79,142,247,.09),rgba(157,110,248,.07))",border:"1px solid rgba(79,142,247,.28)",borderRadius:14,padding:"11px 13px",marginBottom:16,display:"flex",alignItems:"center",gap:11,cursor:"pointer",animation:`rise .5s cubic-bezier(.34,1.56,.64,1) ${hasScores?270:180}ms both`}}
+        onClick={()=>{H.medium();onStart("home");}}>
+        <div style={{position:"relative",flexShrink:0}}>
+          <div style={{width:38,height:38,borderRadius:"50%",background:"radial-gradient(circle at 36% 34%,#4F8EF7,#9D6EF8)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 0 12px rgba(79,142,247,.5)",animation:"orb-float 3.2s ease-in-out infinite"}}>
+            <div style={{width:"38%",height:"38%",borderRadius:"50%",background:"rgba(255,255,255,.87)",filter:"blur(1.5px)"}}/>
+          </div>
+          <div style={{position:"absolute",bottom:0,right:0,width:10,height:10,borderRadius:"50%",background:"#0FD98A",border:"2px solid var(--bg)",animation:"orb-pulse 2s ease infinite"}}/>
+        </div>
+        <div style={{textAlign:"left"}}>
+          <div style={{fontFamily:"var(--ffd)",fontSize:13,fontWeight:800,color:"#fff"}}>Talk to our personalised AI</div>
+          <div style={{fontSize:10,color:"rgba(255,255,255,.5)",marginTop:2}}>Finance · Markets · Business — ask anything</div>
+        </div>
+      </div>
+
+      {/* CTA buttons */}
+      <div style={{display:"flex",flexDirection:"column",gap:9,width:"100%",maxWidth:310,animation:`rise .5s cubic-bezier(.34,1.56,.64,1) ${hasScores?360:270}ms both`}}>
+        <button onClick={()=>{H.medium();onStart("home");}} className="tap glow" style={{padding:"15px",borderRadius:13,background:"linear-gradient(135deg,#4F8EF7,#9D6EF8)",color:"#fff",fontFamily:"var(--ffd)",fontSize:15,fontWeight:700,cursor:"pointer",boxShadow:"0 0 22px rgba(79,142,247,.36)"}}>
+          {hasScores ? "Continue Learning →" : "Start Learning →"}
+        </button>
+        <button onClick={()=>{H.medium();onStart("challenge");}} className="tap" style={{padding:"15px",borderRadius:13,border:"1px solid rgba(79,142,247,.24)",background:"rgba(79,142,247,.06)",color:"var(--t1)",fontFamily:"var(--ffd)",fontSize:15,fontWeight:700,cursor:"pointer"}}>
+          🧠 {hasScores ? "Retake Challenge" : "Test Your Skill Level"}
+        </button>
+      </div>
+    </div>
+  );
+}
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+const NavBar = memo(({ active, onNavigate }) => {
+  const items = [{ id: "home", label: "HOME", icon: "🏠" }, { id: "lesson", label: "LEARN", icon: "📚" }, { id: "trade", label: "TRADE", icon: "⚡" }, { id: "challenge", label: "PLAY", icon: "🧠" }];
+  return (
+    <div style={{ display: "flex", height: "var(--nav-h)", borderTop: "1px solid rgba(255,255,255,.12)", background: "rgba(4,4,6,.99)", flexShrink: 0, alignItems: "center" }}>
+      {items.map(it => (
+        <button key={it.id} onClick={() => { H.light(); onNavigate(it.id); }} className="tap" style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 3, background: active === it.id ? "rgba(79,142,247,.08)" : "none", padding: "4px 0", border: "none", cursor: "pointer", opacity: active === it.id ? 1 : .75, transition: "opacity .15s,background .15s" }}>
+          <span style={{ fontSize: 17 }}>{it.icon}</span>
+          <span style={{ fontFamily: "var(--ffm)", fontSize: 7.5, letterSpacing: ".06em", color: active === it.id ? "var(--blue)" : "#bbb", fontWeight: active === it.id ? 700 : 400 }}>{it.label}</span>
+          {active === it.id && <div style={{ width: 14, height: 1.5, borderRadius: 1, background: "var(--blue)", boxShadow: "0 0 5px rgba(79,142,247,.7)" }} />}
+        </button>
+      ))}
+    </div>
+  );
+});
+
+// ─── ROOT APP ─────────────────────────────────────────────────────────────────
+function App() {
+  const [screen, setScreen] = useState("intro");
+  const [navStack, setNavStack] = useState([]);
+  const [xp, setXp] = useState(75);
+  const [streak] = useState(3);
+  const [xpDelta, setXpDelta] = useState(0);
+  const [nudge, setNudge] = useState("");
+  const [nudgeKey, setNudgeKey] = useState(0);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [scenario, setScenario] = useState("");
+  const [sessionCount, setSessionCount] = useState(0);
+  const [aiToast, setAiToast] = useState(null);
+  const [aiPulsing, setAiPulsing] = useState(false);
+  const [autoMsg, setAutoMsg] = useState(null);
+  const toastKeyRef = useRef(0);
+  const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 700);
+  const [challengeScores, setChallengeScores] = useState({});
+
+  const onChallengeResult = useCallback(scores => {
+    setChallengeScores(prev => {
+      const merged = {...prev};
+      Object.entries(scores).forEach(([track, ts]) => {
+        const p = merged[track] || {correct:0, total:0};
+        merged[track] = {correct: p.correct + ts.correct, total: p.total + ts.total};
+      });
+      return merged;
+    });
+  }, []);
+
+  useEffect(() => {
+    const check = () => setIsDesktop(window.innerWidth >= 700);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const addXP = useCallback(n => { setXp(x => x + n); setXpDelta(n); setTimeout(() => setXpDelta(0), 1100); }, []);
+  const onNudge = useCallback(msg => { setNudge(msg); setNudgeKey(k => k + 1); }, []);
+  const onAutoAI = useCallback(msg => {
+    if (!msg) return;
+    toastKeyRef.current++;
+    setAutoMsg(null);
+    requestAnimationFrame(() => setAutoMsg(msg));
+    setAiToast({ msg, key: toastKeyRef.current });
+    setAiPulsing(true);
+    setTimeout(() => setAiPulsing(false), 2000);
+  }, []);
+
+  const [filterTrack, setFilterTrack] = useState(null);
+
+  const go = useCallback((to, opts={}) => {
+    setNavStack(s => [...s, screen]);
+    setScreen(to); setChatOpen(false);
+    if (opts.track !== undefined) setFilterTrack(opts.track);
+    else setFilterTrack(null);
+    const m = { home: cue("start"), lesson: "Let's see what you know.", trade: cue("trade"), challenge: "Speed matters here." };
+    if (m[to]) { setNudge(m[to]); setNudgeKey(k => k + 1); }
+  }, [screen]);
+
+  const goBack = useCallback(() => {
+    setNavStack(s => { const ns = [...s]; const prev = ns.pop() || "home"; setScreen(prev); return ns; });
+    setChatOpen(false);
+  }, []);
+
+  const canGoBack = navStack.length > 0 && screen !== "intro";
+  const showNav = ["home", "lesson", "trade", "challenge"].includes(screen);
+  const showAI = screen !== "intro";
+
+  return (
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", background: "var(--bg)" }}>
+      <div style={{ display: "flex", flexDirection: "column", overflow: "hidden", position: "relative",
+        width: "100%",
+        maxWidth: isDesktop ? 860 : "100%",
+        height: "100%",
+        margin: isDesktop ? "0 auto" : 0,
+        background: "var(--bg)",
+      }}>
+        <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0, background: "radial-gradient(ellipse 80% 42% at 50% 0%,rgba(79,142,247,.05) 0%,transparent 65%)" }} />
+
+        {showNav && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 17px 8px", borderBottom: "1px solid var(--b1)", flexShrink: 0, position: "relative", zIndex: 10, background: "rgba(6,6,8,.94)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              {canGoBack
+                ? <BackBtn onBack={goBack} />
+                : <div style={{ fontFamily: "var(--ffd)", fontSize: 16, fontWeight: 800, letterSpacing: "-.025em", background: "linear-gradient(135deg,#fff 40%,#9D6EF8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>MarketPlay</div>}
+            </div>
+            <XPBar xp={xp} streak={streak} delta={xpDelta} />
+          </div>
+        )}
+        {!showNav && canGoBack && <div style={{ position: "absolute", top: 16, left: 16, zIndex: 20 }}><BackBtn onBack={goBack} /></div>}
+
+        {["home", "trade"].includes(screen) && <Ticker />}
+
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", position: "relative", zIndex: 5 }}>
+          <div key={screen} style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", animation: "in .22s ease" }}>
+            {screen === "intro" && <IntroScreen onStart={go} challengeScores={challengeScores} />}
+            {screen === "home" && <HomeScreen xp={xp} streak={streak} onNavigate={go} sessionCount={sessionCount} onOpenAI={() => setChatOpen(true)} challengeScores={challengeScores} />}
+            {screen === "lesson" && <LessonScreen onComplete={() => { addXP(120); go("home"); }} onXP={addXP} onNudge={onNudge} onScenario={setScenario} />}
+            {screen === "trade" && <TradeScreen onXP={addXP} onNudge={onNudge} onScenario={setScenario} onAutoAI={onAutoAI} />}
+            {screen === "challenge" && <ChallengeScreen onComplete={() => { setSessionCount(c => c + 1); go("home"); }} onXP={addXP} onNudge={onNudge} sessionCount={sessionCount} onAutoAI={onAutoAI} onChallengeResult={onChallengeResult} filterTrack={filterTrack} />}
+          </div>
+        </div>
+
+        {showNav && <NavBar active={screen} onNavigate={go} />}
+
+        {aiToast && <AIToast key={aiToast.key} msg={aiToast.msg} onDone={() => setAiToast(null)} />}
+
+        {showAI && (
+          <AIAssistant
+            open={chatOpen}
+            onToggle={() => setChatOpen(o => !o)}
+            nudge={nudge}
+            nudgeKey={nudgeKey}
+            scenario={scenario}
+            hasNav={showNav}
+            pulsing={aiPulsing}
+            autoMsg={autoMsg}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
